@@ -1,37 +1,77 @@
 <!DOCTYPE html>
-<html>
+<html lang="bn">
 <head>
-    <title>Ayan's Website</title>
-    <style>
-        body{
-            font-family: Arial;
-            text-align:center;
-            background:#111;
-            color:white;
-            padding:50px;
-        }
-        img{
-            width:150px;
-            border-radius:50%;
-        }
-        a{
-            color:#00bfff;
-            display:block;
-            margin:10px;
-            font-size:20px;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayan - Portfolio</title>
+    <!-- FontAwesome Font for Social Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>Ayan</h1>
-<p>Welcome to my website</p>
+    <div class="container">
+        <!-- Hero Section -->
+        <header class="hero">
+            <p class="hi-text">Hi,</p>
+            <h1>I am AYAN</h1>
+            <p class="sub-title">Web3 Content Creator • DeAI Researcher • Community Builder</p>
+            <a href="#" class="btn-collab">Contact for Collab <i class="fa-brands fa-x-twitter"></i></a>
+        </header>
 
-<a href="https://facebook.com/yourid">Facebook</a>
-<a href="https://instagram.com/yourid">Instagram</a>
-<a href="https://x.com/yourid">X (Twitter)</a>
-<a href="https://t.me/yourid">Telegram</a>
-<a href="https://github.com/Ayan1816">GitHub</a>
+        <!-- Profile & About Section -->
+        <section class="profile-about">
+            <div class="profile-card">
+                <div class="avatar-placeholder">
+                    <!-- এখানে আপনার ছবির লিংক দিতে পারেন -->
+                    <i class="fa-solid fa-user-astronaut"></i>
+                </div>
+                <h3>AYAN</h3>
+                <p><i class="fa-solid fa-location-dot"></i> Joypurhat, Bangladesh</p>
+            </div>
+            <div class="about-card">
+                <p>Passionate Web3 Researcher and Content Creator dedicated to exploring decentralized AI, privacy-first infrastructure, and zero-knowledge solutions. A committed community builder striving to add value across the Web3 ecosystem.</p>
+            </div>
+        </section>
+
+        <!-- Experience Tags -->
+        <section class="experience">
+            <h2>My Experience</h2>
+            <div class="tags">
+                <span class="tag tag-red">Web3 Community Building</span>
+                <span class="tag tag-green">Moderator</span>
+                <span class="tag tag-blue">Ambassador</span>
+                <span class="tag tag-purple">Content Creator</span>
+                <span class="tag tag-orange">Researcher</span>
+            </div>
+        </section>
+
+        <!-- Achievements / Achievements Cards -->
+        <section class="achievements">
+            <div class="achievement-card">
+                <div class="card-badge">🏅 Moderator & Researcher</div>
+                <h3 class="project-title">NESA</h3>
+                <div class="card-content">
+                    <p>Contributing as a dedicated Discord Moderator and Researcher. Supporting decentralized AI infrastructure, handling technical feedback, and creating ecosystem tutorials.</p>
+                </div>
+                <div class="card-buttons">
+                    <button class="btn-card primary">1-Year Milestone</button>
+                    <button class="btn-card secondary">Discord Role</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Social Media Icons Footer -->
+        <footer>
+            <div class="social-icons">
+                <a href="#" target="_blank"><i class="fa-brands fa-x-twitter"></i></a>
+                <a href="#" target="_blank"><i class="fa-brands fa-telegram"></i></a>
+                <a href="#" target="_blank"><i class="fa-brands fa-discord"></i></a>
+                <a href="#" target="_blank"><i class="fa-solid fa-envelope"></i></a>
+            </div>
+            <p class="footer-note">Made with ❤️ by Ayan</p>
+        </footer>
+    </div>
 
 </body>
 </html>
