@@ -160,54 +160,77 @@
         let userAptosAddress = null;
         let isConnected = false;
 
-        // মিসেস ব্রাউজার এক্সটেনশন বা ইনজেক্টেড অবজেক্ট ডিটেক্ট করার জন্য
-        function getWalletProvider() {
-            if (window.aptos) return window.aptos;
-            if (window.petra) return window.petra;
+        // Petra প্রোভাইডার চেক করার উন্নত মেথড
+        function getPetraProvider() {
+            if ("aptos" in window) {
+                return window.aptos;
+            }
+            if ("petra" in window) {
+                return window.petra;
+            }
             return null;
         }
 
         async function handleWalletAction() {
-            const wallet = getWalletProvider();
+            const wallet = getPetraProvider();
             
             if (!wallet) {
-                alert("Petra ওয়ালেট এক্সটেনশন পাওয়া যায়নি! দয়া করে নিশ্চিত করুন আপনার মিসেস ব্রাউজারে Petra এক্সটেনশনটি ইনস্টল এবং আনলক করা আছে।");
+                alert("Petra ওয়ালেট পাওয়া যায়নি! আপনার মিসেস ব্রাউজারে Petra এক্সটেনশনটি ইনস্টল বা আনলক করা আছে কিনা চেক করুন।");
                 return;
             }
 
             if (isConnected) {
-                // ডিসকানেক্ট করার মেকানিজম
                 try {
                     if (typeof wallet.disconnect === "function") {
                         await wallet.disconnect();
                     }
                     resetWalletUI();
-                    alert("ওয়ালেট সফলভাবে ডিসকানেক্ট করা হয়েছে।");
+                    alert("ওয়ালেট ডিসকানেক্ট করা হয়েছে।");
                 } catch (error) {
-                    console.error("Disconnect error:", error);
+                    console.error(error);
                     resetWalletUI(); 
                 }
             } else {
-                // কানেক্ট করার মেকানিজম
                 try {
-                    // এক্সটেনশনের জন্য ডাইরেক্ট কানেকশন মেথড
-                    const response = await wallet.connect();
+                    // ডিরেক্টলি ওয়ালেট কানেক্ট ট্রাই করা
+                    const account = await wallet.connect();
                     
-                    // কানেক্ট হওয়ার পর অ্যাকাউন্ট ডেটা রিড করা
-                    const account = await wallet.account();
-                    
+                    // কানেকশন ডেটা সফল হলে UI আপডেট
                     if (account && account.address) {
                         setupConnectedUI(account.address);
-                        alert("Petra ওয়ালেট সফলভাবে কানেক্ট হয়েছে!");
-                    } else if (response && response.address) {
-                        setupConnectedUI(response.address);
-                        alert("Petra ওয়ালেট সফলভাবে কানেক্ট হয়েছে!");
+                    } else {
+                        // অল্টারনেটিভ চেক যদি অবজেক্ট অন্যভাবে ডেটা রিটার্ন করে
+                        const currentAccount = await wallet.account();
+                        if (currentAccount && currentAccount.address) {
+                            setupConnectedUI(currentAccount.address);
+                        }
                     }
                 } catch (error) {
-                    console.error("Connection failed:", error);
+                    console.error("Connection error:", error);
                     
-                    // এক্সটেনশন ব্যাকআপ স্ট্র্যাটেজি: রিকোয়েস্ট পাঠিয়ে ইউজারকে ম্যানুয়ালি চেক করতে বলা
-                    alert("কানেকশন রিকোয়েস্ট পাঠানো হয়েছে। যদি পপ-আপ না আসে, তবে ওপরে ডানদিকের এক্সটেনশন আইকন থেকে Petra ওয়ালেটে ক্লিক করে অনুমোদন (Approve) করে দিন।");
+                    // মোবাইল ব্রাউজার এক্সটেনশনের ক্ষেত্রে পপ-আপ রিকোয়েস্ট ফেইল হলে এই অল্টারনেটিভ মেথডটি পুশ করবে
+                    try {
+                        alert("সরাসরি পপ-আপ না আসলে 'OK' প্রেস করুন। এরপর ব্রাউজারের Extensions মেনু থেকে Petra ওয়ালেটে ক্লিক করে ম্যানুয়ালি সাইন-ইন বা অ্যাপ্রুভ করুন।");
+                        
+                        // ব্যাকগ্রাউন্ডে চেক লুপ চালু করা যাতে ইউজার ওয়ালেটে ক্লিক করলেই কানেক্ট হয়ে যায়
+                        const checkInterval = setInterval(async () => {
+                            try {
+                                const activeAcc = await wallet.account();
+                                if (activeAcc && activeAcc.address) {
+                                    setupConnectedUI(activeAcc.address);
+                                    clearInterval(checkInterval);
+                                }
+                            } catch (e) {
+                                // এখনো কানেক্ট হয়নি, লুপ চলতে থাকবে
+                            }
+                        }, 2000);
+
+                        // ৩০ সেকেন্ড পর লুপ অটো বন্ধ হবে
+                        setTimeout(() => clearInterval(checkInterval), 30000);
+
+                    } catch (secError) {
+                        alert("ওয়ালেট কানেক্ট করা সম্ভব হয়নি। পেজটি রিফ্রেশ দিয়ে আবার চেষ্টা করুন।");
+                    }
                 }
             }
         }
@@ -221,7 +244,6 @@
             walletBtn.innerText = shortAddr;
             walletBtn.className = "btn-wallet connected";
 
-            // মাউস/টাচ ওভার ইফেক্ট (ডিসকানেক্ট টেক্সট শো করার জন্য)
             walletBtn.onmouseover = function() {
                 this.innerText = "Disconnect ❌";
                 this.classList.add('disconnect-mode');
@@ -263,7 +285,7 @@
                 alert("দয়া করে প্রথমে ওয়ালেট কানেক্ট করুন!");
                 return;
             }
-            alert("আপনার টেস্টনেট অ্যাকাউন্টটি প্রস্তুত আছে। ছবি আপলোড সফল করতে পরবর্তী ধাপে Pinata IPFS API Key কনফিগার করতে হবে।");
+            alert("আপনার অ্যাকাউন্ট প্রস্তুত আছে। পরবর্তী ধাপে ছবি আপলোড সফল করতে Pinata IPFS API Key কনফিগার করতে হবে।");
         }
     </script>
 </body>
