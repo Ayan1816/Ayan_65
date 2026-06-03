@@ -131,7 +131,7 @@
             <div class="logo">
                 <i class="fa-solid fa-vault"></i> ShelbyVault
             </div>
-            <button class="btn-wallet" id="walletBtn" onclick="connectAptosWallet()">Connect Aptos</button>
+            <button class="btn-wallet" id="walletBtn" onclick="initiateAptosWallet()">Connect Petra</button>
         </div>
 
         <div class="upload-section" onclick="triggerFileInput()">
@@ -155,57 +155,62 @@
     <script>
         let userAptosAddress = null;
 
-        async function connectAptosWallet() {
-            // Target Petra wallet specific mobile implementation
-            const getWallet = () => {
-                if ('aptos' in window) {
-                    return window.aptos;
-                }
-                if ('petra' in window) {
-                    return window.petra;
-                }
-                return null;
-            };
+        // Secure, async function to check injected provider multiple times
+        async function getProviderWithRetry(retries = 3, delay = 200) {
+            for (let i = 0; i < retries; i++) {
+                const provider = window.aptos || window.petra;
+                if (provider) return provider;
+                await new Promise(res => setTimeout(res, delay));
+            }
+            return window.aptos || window.petra;
+        }
 
-            const wallet = getWallet();
+        async function initiateAptosWallet() {
+            const wallet = await getProviderWithRetry();
 
             if (wallet) {
                 try {
-                    // Force account connection
-                    const account = await wallet.connect();
-                    
-                    // Handle address recovery from both direct string or object response
-                    if (typeof account === 'object' && account !== null) {
-                        userAptosAddress = account.address;
-                    } else {
-                        const currentAccount = await wallet.account();
-                        userAptosAddress = currentAccount.address;
-                    }
-                    
-                    if (userAptosAddress) {
-                        const walletBtn = document.getElementById('walletBtn');
-                        walletBtn.innerText = userAptosAddress.substring(0, 6) + "..." + userAptosAddress.substring(userAptosAddress.length - 4);
-                        walletBtn.style.background = "#10b981"; 
-                        alert("Aptos ওয়ালেট সফলভাবে কানেক্ট হয়েছে!");
-                    }
-                } catch (error) {
-                    console.error("Connection error:", error);
-                    // Fallback to check if already connected
-                    try {
+                    // Check if already connected silently
+                    const isConnected = await wallet.isConnected();
+                    if (isConnected) {
                         const activeAccount = await wallet.account();
                         if (activeAccount && activeAccount.address) {
-                            userAptosAddress = activeAccount.address;
-                            const walletBtn = document.getElementById('walletBtn');
-                            walletBtn.innerText = userAptosAddress.substring(0, 6) + "..." + userAptosAddress.substring(userAptosAddress.length - 4);
-                            walletBtn.style.background = "#10b981";
+                            successConnection(activeAccount.address);
                             return;
                         }
-                    } catch(e) {}
-                    alert("ওয়ালেট কানেক্ট করার অনুমতি দিন।");
+                    }
+
+                    // Direct fresh connection block request
+                    const response = await wallet.connect();
+                    const addr = response ? (response.address || response) : null;
+                    
+                    if (addr && typeof addr === 'string') {
+                        successConnection(addr);
+                    } else {
+                        // Safe alternative strategy for older Petra builds
+                        const secondaryCheck = await wallet.account();
+                        if (secondaryCheck && secondaryCheck.address) {
+                            successConnection(secondaryCheck.address);
+                        } else {
+                            throw new Error("Address structure missing.");
+                        }
+                    }
+                } catch (error) {
+                    console.error("Wallet connection flow interrupted:", error);
+                    // Standard explicit manual prompt fallback
+                    alert("Petra ওয়ালেট কানেকশন রিকোয়েস্ট প্রোসেস করছে। দয়া করে ব্রাউজার পেজটি রিফ্রেশ দিন এবং ব্রাউজার ট্যাবটি পুনরায় খোলার চেষ্টা করুন।");
                 }
             } else {
-                alert("Aptos ওয়ালেট পাওয়া যায়নি। পেজটি রিফ্রেশ দিন।");
+                alert("Aptos ওয়ালেট প্রোভাইডার পাওয়া যায়নি। দয়া করে নিশ্চিত করুন আপনি Petra dApp ব্রাউজার ট্যাব ব্যবহার করছেন।");
             }
+        }
+
+        function successConnection(address) {
+            userAptosAddress = address;
+            const walletBtn = document.getElementById('walletBtn');
+            walletBtn.innerText = address.substring(0, 6) + "..." + address.substring(address.length - 4);
+            walletBtn.style.background = "#10b981"; 
+            alert("Aptos ওয়ালেট সফলভাবে অ্যাপে যুক্ত করা হয়েছে!");
         }
 
         function triggerFileInput() {
@@ -224,10 +229,10 @@
 
         function publishMeme() {
             if (!userAptosAddress) {
-                alert("অনুগ্রহ করে প্রথমে ওয়ালেট কানেক্ট করুন!");
+                alert("দয়া করে প্রথমে ওয়ালেট কানেক্ট করুন!");
                 return;
             }
-            alert("ছবি সেভ করতে এখন Pinata IPFS API Key প্রয়োজন।");
+            alert("ছবি আপলোড করার জন্য এখন Pinata IPFS API Key প্রয়োজন।");
         }
     </script>
 </body>
