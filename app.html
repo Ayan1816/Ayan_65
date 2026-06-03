@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shelby Vault - Decentralized Meme Storage</title>
-    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         * {
@@ -51,7 +50,7 @@
         }
 
         .btn-wallet {
-            background: #ed4c5c; /* Aptos-themed Coral Red/Orange vibe */
+            background: #ed4c5c;
             color: white;
             border: none;
             padding: 8px 16px;
@@ -77,17 +76,6 @@
             margin-bottom: 20px;
         }
 
-        .upload-section:hover {
-            border-color: #38bdf8;
-            background: #253142;
-        }
-
-        .upload-icon {
-            font-size: 40px;
-            color: #9ca3af;
-            margin-bottom: 12px;
-        }
-
         .input-group {
             margin-bottom: 20px;
         }
@@ -110,10 +98,6 @@
             outline: none;
         }
 
-        .input-field:focus {
-            border-color: #38bdf8;
-        }
-
         .btn-publish {
             width: 100%;
             background: linear-gradient(135deg, #38bdf8, #0369a1);
@@ -124,15 +108,10 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.3s;
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 8px;
-        }
-
-        .btn-publish:hover {
-            opacity: 0.9;
         }
 
         .preview-box {
@@ -148,7 +127,6 @@
 <body>
 
     <div class="app-container">
-        <!-- Top Header Section -->
         <div class="header">
             <div class="logo">
                 <i class="fa-solid fa-vault"></i> ShelbyVault
@@ -156,22 +134,19 @@
             <button class="btn-wallet" id="walletBtn" onclick="connectAptosWallet()">Connect Aptos</button>
         </div>
 
-        <!-- File Upload Area -->
         <div class="upload-section" onclick="triggerFileInput()">
-            <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 40px; color: #9ca3af; margin-bottom: 12px;"></i>
             <p style="font-weight: 600; margin-bottom: 4px;">Choose Meme Image</p>
             <p style="font-size: 12px; color: #9ca3af;">PNG, JPG or GIF up to 10MB</p>
             <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="previewImage(event)">
             <img id="imagePreview" class="preview-box" alt="Preview">
         </div>
 
-        <!-- Metadata Input Field -->
         <div class="input-group">
             <label for="caption">Meme Caption / Description</label>
             <input type="text" id="caption" class="input-field" placeholder="Enter a funny caption...">
         </div>
 
-        <!-- Action Button -->
         <button class="btn-publish" onclick="publishMeme()">
             <i class="fa-solid fa-rocket"></i> Publish to ShelbyNet
         </button>
@@ -180,27 +155,31 @@
     <script>
         let userAptosAddress = null;
 
-        // REAL Aptos Wallet Connection (Petra, Pontem, etc.)
+        // Enhanced Aptos Mobile Connection Logic
         async function connectAptosWallet() {
-            // Check for Aptos Wallet extension/app
-            const isAptosAvailable = window.aptos || window.petra;
+            // Aptos wallets inside dApp browsers can inject in multiple entrypoints
+            const wallet = window.aptos || window.petra || (window.martian && window.martian.aptos);
 
-            if (isAptosAvailable) {
+            if (wallet) {
                 try {
-                    // Connect request
-                    const response = await isAptosAvailable.connect();
-                    userAptosAddress = response.address;
+                    // Step 1: Account connection request
+                    const account = await wallet.connect();
                     
-                    const walletBtn = document.getElementById('walletBtn');
-                    // Shorten Aptos Address to display
-                    walletBtn.innerText = userAptosAddress.substring(0, 6) + "..." + userAptosAddress.substring(userAptosAddress.length - 4);
-                    walletBtn.style.background = "#10b981"; // Turn Green upon connection
-                    console.log("Aptos Wallet Connected:", userAptosAddress);
+                    // Step 2: Extract address based on different wallet structures
+                    userAptosAddress = account.address || (await wallet.account()).address;
+                    
+                    if (userAptosAddress) {
+                        const walletBtn = document.getElementById('walletBtn');
+                        walletBtn.innerText = userAptosAddress.substring(0, 6) + "..." + userAptosAddress.substring(userAptosAddress.length - 4);
+                        walletBtn.style.background = "#10b981"; 
+                        alert("Aptos ওয়ালেট সফলভাবে কানেক্ট হয়েছে!");
+                    }
                 } catch (error) {
-                    alert("Aptos Wallet connection rejected!");
+                    console.error(error);
+                    alert("ওয়ালেট কানেকশন রিজেক্ট হয়েছে বা ত্রুটি ঘটেছে।");
                 }
             } else {
-                alert("Aptos Wallet খুঁজে পাওয়া যায়নি! দয়া করে Petra Wallet App বা Pontem ব্রাউজার ব্যবহার করুন।");
+                alert("কোনো Aptos ওয়ালেট সনাক্ত করা যায়নি। অনুগ্রহ করে এই ব্রাউজার পেজটি রিফ্রেশ করুন অথবা Petra ওয়ালেটের ভেতর থেকে ট্রাই করুন।");
             }
         }
 
@@ -218,23 +197,13 @@
             reader.readAsDataURL(event.target.files[0]);
         }
 
-        async function publishMeme() {
+        function publishMeme() {
             if (!userAptosAddress) {
-                alert("দয়া করে প্রথমে Aptos Wallet কানেক্ট করুন!");
+                alert("অনুগ্রহ করে প্রথমে ওয়ালেট কানেক্ট করুন!");
                 return;
             }
-
-            const caption = document.getElementById('caption').value;
-            const file = document.getElementById('fileInput').files[0];
-
-            if (!file) {
-                alert("Please select an image first!");
-                return;
-            }
-
-            alert("আপনার Aptos Wallet " + userAptosAddress.substring(0,6) + "... কানেক্টেড আছে! ছবি আপলোডের জন্য এবার Pinata API Key লাগবে।");
+            alert("ওয়ালেট রেডি আছে! ছবি সেভ করতে এখন Pinata IPFS API Key প্রয়োজন।");
         }
     </script>
-
 </body>
 </html>
