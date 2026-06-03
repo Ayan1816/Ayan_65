@@ -155,18 +155,32 @@
     <script>
         let userAptosAddress = null;
 
-        // Enhanced Aptos Mobile Connection Logic
         async function connectAptosWallet() {
-            // Aptos wallets inside dApp browsers can inject in multiple entrypoints
-            const wallet = window.aptos || window.petra || (window.martian && window.martian.aptos);
+            // Target Petra wallet specific mobile implementation
+            const getWallet = () => {
+                if ('aptos' in window) {
+                    return window.aptos;
+                }
+                if ('petra' in window) {
+                    return window.petra;
+                }
+                return null;
+            };
+
+            const wallet = getWallet();
 
             if (wallet) {
                 try {
-                    // Step 1: Account connection request
+                    // Force account connection
                     const account = await wallet.connect();
                     
-                    // Step 2: Extract address based on different wallet structures
-                    userAptosAddress = account.address || (await wallet.account()).address;
+                    // Handle address recovery from both direct string or object response
+                    if (typeof account === 'object' && account !== null) {
+                        userAptosAddress = account.address;
+                    } else {
+                        const currentAccount = await wallet.account();
+                        userAptosAddress = currentAccount.address;
+                    }
                     
                     if (userAptosAddress) {
                         const walletBtn = document.getElementById('walletBtn');
@@ -175,11 +189,22 @@
                         alert("Aptos ওয়ালেট সফলভাবে কানেক্ট হয়েছে!");
                     }
                 } catch (error) {
-                    console.error(error);
-                    alert("ওয়ালেট কানেকশন রিজেক্ট হয়েছে বা ত্রুটি ঘটেছে।");
+                    console.error("Connection error:", error);
+                    // Fallback to check if already connected
+                    try {
+                        const activeAccount = await wallet.account();
+                        if (activeAccount && activeAccount.address) {
+                            userAptosAddress = activeAccount.address;
+                            const walletBtn = document.getElementById('walletBtn');
+                            walletBtn.innerText = userAptosAddress.substring(0, 6) + "..." + userAptosAddress.substring(userAptosAddress.length - 4);
+                            walletBtn.style.background = "#10b981";
+                            return;
+                        }
+                    } catch(e) {}
+                    alert("ওয়ালেট কানেক্ট করার অনুমতি দিন।");
                 }
             } else {
-                alert("কোনো Aptos ওয়ালেট সনাক্ত করা যায়নি। অনুগ্রহ করে এই ব্রাউজার পেজটি রিফ্রেশ করুন অথবা Petra ওয়ালেটের ভেতর থেকে ট্রাই করুন।");
+                alert("Aptos ওয়ালেট পাওয়া যায়নি। পেজটি রিফ্রেশ দিন।");
             }
         }
 
@@ -202,7 +227,7 @@
                 alert("অনুগ্রহ করে প্রথমে ওয়ালেট কানেক্ট করুন!");
                 return;
             }
-            alert("ওয়ালেট রেডি আছে! ছবি সেভ করতে এখন Pinata IPFS API Key প্রয়োজন।");
+            alert("ছবি সেভ করতে এখন Pinata IPFS API Key প্রয়োজন।");
         }
     </script>
 </body>
