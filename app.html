@@ -1,1 +1,211 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shelby Vault - Decentralized Meme Storage</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
+        body {
+            background-color: #0b0f19;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app-container {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 480px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #38bdf8;
+        }
+
+        .btn-wallet {
+            background: #0284c7;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-wallet:hover {
+            background: #0369a1;
+        }
+
+        .upload-section {
+            border: 2px dashed #374151;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            background: #1f2937;
+            margin-bottom: 20px;
+        }
+
+        .upload-section:hover {
+            border-color: #38bdf8;
+            background: #253142;
+        }
+
+        .upload-icon {
+            font-size: 40px;
+            color: #9ca3af;
+            margin-bottom: 12px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        .input-field {
+            width: 100%;
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: #38bdf8;
+        }
+
+        .btn-publish {
+            width: 100%;
+            background: linear-gradient(135deg, #38bdf8, #0369a1);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-publish:hover {
+            opacity: 0.9;
+        }
+
+        .preview-box {
+            display: none;
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="header">
+            <div class="logo">
+                <i class="fa-solid fa-vault"></i> ShelbyVault
+            </div>
+            <button class="btn-wallet" id="walletBtn" onclick="connectWallet()">Connect Wallet</button>
+        </div>
+
+        <div class="upload-section" onclick="triggerFileInput()">
+            <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+            <p style="font-weight: 600; margin-bottom: 4px;">Choose Meme Image</p>
+            <p style="font-size: 12px; color: #9ca3af;">PNG, JPG or GIF up to 10MB</p>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="previewImage(event)">
+            <img id="imagePreview" class="preview-box" alt="Preview">
+        </div>
+
+        <div class="input-group">
+            <label for="caption">Meme Caption / Description</label>
+            <input type="text" id="caption" class="input-field" placeholder="Enter a funny caption...">
+        </div>
+
+        <button class="btn-publish" onclick="publishMeme()">
+            <i class="fa-solid fa-rocket"></i> Publish to ShelbyNet
+        </button>
+    </div>
+
+    <script>
+        function connectWallet() {
+            const walletBtn = document.getElementById('walletBtn');
+            walletBtn.innerText = "0x7aB...3E9";
+            walletBtn.style.background = "#10b981";
+            alert("Wallet successfully connected!");
+        }
+
+        function triggerFileInput() {
+            document.getElementById('fileInput').click();
+        }
+
+        function previewImage(event) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                const output = document.getElementById('imagePreview');
+                output.src = reader.result;
+                output.style.display = 'block';
+            }
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        function publishMeme() {
+            const caption = document.getElementById('caption').value;
+            const file = document.getElementById('fileInput').files[0];
+
+            if (!file) {
+                alert("Please select an image first!");
+                return;
+            }
+            alert("Uploading image to IPFS and submitting transaction to ShelbyNet with caption: " + caption);
+        }
+    </script>
+
+</body>
+  </html>
+  
