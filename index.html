@@ -1,61 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShelbyVault</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-[#0b0f19] text-white flex items-center justify-center min-h-screen">
+@@ -22,9 +22,9 @@ <h1>I am AYAN</h1>
+        <!-- Profile & About Section -->
+        <section class="profile-about">
+            <div class="profile-card">
+                <!-- এখানে আপনার ছবির লিঙ্ক দেওয়া হয়েছে (ফাইলটি GitHub এ আপলোড করে নেবেন) -->
+                <div class="avatar-placeholder">
+                    <img src="profile.png" alt="AYAN" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                <!-- এখানে সরাসরি আপনার GitHub প্রোফাইলের ছবি লিংক করে দেওয়া হলো -->
+                <div class="avatar-placeholder" style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; margin: 0 auto 15px; background: #222a36; display: flex; align-items: center; justify-content: center;">
+                    <img src="https://github.com/ayan1816.png" alt="AYAN" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                </div>
+                <h3>AYAN</h3>
+                <p><i class="fa-solid fa-location-dot"></i> Dhaka, Bangladesh</p>
+@@ -34,7 +34,7 @@ <h3>AYAN</h3>
+            </div>
+        </section>
 
-    <div class="w-full max-w-md p-6 bg-[#111827] border border-gray-800 rounded-2xl shadow-2xl">
-        <div class="flex items-center justify-between mb-6">
-            <span class="text-lg font-bold">ShelbyVault</span>
-            <button id="walletBtn" onclick="connectWallet()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold">
-                Connect Petra
-            </button>
-        </div>
-        
-        <div class="border-2 border-dashed border-gray-600 p-8 rounded-xl text-center">
-            <p>Choose Meme Image</p>
-        </div>
-        
-        <input type="text" placeholder="Caption.." class="w-full mt-4 p-3 bg-gray-900 border border-gray-700 rounded-lg text-white">
-        <button class="w-full mt-4 bg-blue-600 p-3 rounded-lg font-bold">Publish</button>
-    </div>
+        <!-- Experience Tags -->
+        <!-- My Experience Section -->
+        <section class="experience">
+            <h2>My Experience</h2>
+            <div class="tags">
+@@ -46,14 +46,12 @@ <h2>My Experience</h2>
+            </div>
+        </section>
 
-    <script>
-        // ওয়ালেট কানেক্ট করার লজিক
-        async function connectWallet() {
-            const btn = document.getElementById('walletBtn');
-            
-            // Petra ওয়ালেট চেক করা
-            if (!window.aptos) {
-                alert("Petra Wallet খুঁজে পাওয়া যায়নি! দয়া করে Petra এক্সটেনশনটি ওপেন করুন।");
-                window.open("https://petra.app/", "_blank");
-                return;
-            }
-
-            try {
-                // কানেক্ট রিকোয়েস্ট
-                const response = await window.aptos.connect();
-                
-                // বাটন আপডেট করা
-                btn.innerText = response.address.substring(0, 6) + "...";
-                btn.classList.replace('bg-red-500', 'bg-green-600');
-                
-                // ডিসকানেক্টের জন্য ফাংশন পরিবর্তন
-                btn.onclick = async () => {
-                    await window.aptos.disconnect();
-                    btn.innerText = "Connect Petra";
-                    btn.classList.replace('bg-green-600', 'bg-red-500');
-                    btn.onclick = connectWallet;
-                };
-            } catch (err) {
-                console.error(err);
-                alert("কানেকশন রিকোয়েস্ট বাতিল হয়েছে। ওয়ালেটের ভেতর দেখুন কোনো পেন্ডিং রিকোয়েস্ট আছে কি না।");
-            }
-        }
-    </script>
-</body>
-</html>
+        <!-- Achievements -->
+        <!-- Achievements Section -->
+        <section class="achievements">
+            <div class="achievement-card">
+                <div class="card-badge">🏅 OG Ambassador & Contributor</div>
+                <!-- NESA বাদ দিয়ে dTelecom করে দেওয়া হলো -->
+                <h3 class="project-title">dTelecom</h3>
+                <div class="card-content">
+                    <!-- dTelecom অনুযায়ী ডেসক্রিপশন আপডেট করা হলো -->
+                    <p>Contributing as an OG Ambassador and Phase 1 & 2 Contributor. Supporting decentralized communication networks, building community engagement, and driving ecosystem growth.</p>
+                </div>
+                <div class="card-buttons">
