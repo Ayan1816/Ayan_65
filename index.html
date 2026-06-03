@@ -1,77 +1,43 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ayan - Portfolio</title>
-    <!-- FontAwesome Font for Social Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <title>ShelbyVault - Meme Publisher</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { background-color: #0b0f19; color: #ffffff; }
+        .btn-wallet { background-color: #ef4444; color: #ffffff; padding: 10px 20px; border-radius: 20px; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .btn-wallet.connected { background-color: #10b981 !important; }
+    </style>
 </head>
-<body>
-
-    <div class="container">
-        <!-- Hero Section -->
-        <header class="hero">
-            <p class="hi-text">Hi,</p>
-            <h1>I am AYAN</h1>
-            <p class="sub-title">Web3 Content Creator • DeAI Researcher • Community Builder</p>
-            <a href="https://x.com/ayan_ar65" target="_blank" class="btn-collab">Contact for Collab <i class="fa-brands fa-x-twitter"></i></a>
-        </header>
-
-        <!-- Profile & About Section -->
-        <section class="profile-about">
-            <div class="profile-card">
-                <!-- এখানে সরাসরি আপনার GitHub প্রোফাইলের ছবি লিংক করে দেওয়া হলো -->
-                <div class="avatar-placeholder" style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; margin: 0 auto 15px; background: #222a36; display: flex; align-items: center; justify-content: center;">
-                    <img src="https://github.com/ayan1816.png" alt="AYAN" style="width: 100%; height: 100%; object-fit: cover; display: block;">
-                </div>
-                <h3>AYAN</h3>
-                <p><i class="fa-solid fa-location-dot"></i> Dhaka, Bangladesh</p>
-            </div>
-            <div class="about-card">
-                <p>Passionate Web3 Researcher and Content Creator dedicated to exploring decentralized AI, privacy-first infrastructure, and zero-knowledge solutions. A committed community builder striving to add value across the Web3 ecosystem.</p>
-            </div>
-        </section>
-
-        <!-- My Experience Section -->
-        <section class="experience">
-            <h2>My Experience</h2>
-            <div class="tags">
-                <span class="tag tag-red">Web3 Community Building</span>
-                <span class="tag tag-green">Moderator</span>
-                <span class="tag tag-blue">Ambassador</span>
-                <span class="tag tag-purple">Content Creator</span>
-                <span class="tag tag-orange">Researcher</span>
-            </div>
-        </section>
-
-        <!-- Achievements Section -->
-        <section class="achievements">
-            <div class="achievement-card">
-                <div class="card-badge">🏅 OG Ambassador & Contributor</div>
-                <h3 class="project-title">dTelecom</h3>
-                <div class="card-content">
-                    <p>Contributing as an OG Ambassador and Phase 1 & 2 Contributor. Supporting decentralized communication networks, building community engagement, and driving ecosystem growth.</p>
-                </div>
-                <div class="card-buttons">
-                    <button class="btn-card primary">OG Ambassador</button>
-                    <button class="btn-card secondary">Network Contributor</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Footer with Social Icons -->
-        <footer>
-            <div class="social-icons">
-                <a href="https://x.com/ayan_ar65" target="_blank" title="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
-                <a href="https://www.linkedin.com/in/md-mohin-b6a4912b9" target="_blank" title="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
-                <a href="https://discordapp.com/users/1202922198734610502" target="_blank" title="Discord"><i class="fa-brands fa-discord"></i></a>
-                <a href="mailto:Mohin00220@gmail.com" title="Email"><i class="fa-solid fa-envelope"></i></a>
-            </div>
-            <p class="footer-note">Made with ❤️ by Ayan</p>
-        </footer>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-md p-6 bg-[#111827] border border-gray-800 rounded-2xl shadow-2xl">
+        <div class="flex items-center justify-between mb-6">
+            <span class="text-lg font-bold">ShelbyVault</span>
+            <button id="walletBtn" class="btn-wallet" onclick="connectWallet()">Connect Petra</button>
+        </div>
     </div>
 
+    <script>
+        async function connectWallet() {
+            try {
+                // Petra ওয়ালেটের জন্য নতুন স্ট্যান্ডার্ড
+                if (window.aptos) {
+                    const response = await window.aptos.connect();
+                    const btn = document.getElementById("walletBtn");
+                    btn.innerText = response.address.substring(0, 6) + "...";
+                    btn.classList.add("connected");
+                    alert("ওয়ালেট সফলভাবে কানেক্ট হয়েছে!");
+                } else {
+                    alert("Petra ওয়ালেট এক্সটেনশনটি ওপেন নেই!");
+                }
+            } catch (error) {
+                console.error(error);
+                // যদি কানেক্ট না হয়, তবে ব্রাউজারের পপ-আপ রিকোয়েস্ট চেক করতে বলছি
+                alert("কানেকশন রিকোয়েস্টটি ওয়ালেটে চেক করুন।");
+            }
+        }
+    </script>
 </body>
 </html>
