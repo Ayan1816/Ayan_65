@@ -35,23 +35,24 @@
         async function toggleWallet() {
             const btn = document.getElementById('walletBtn');
             
-            // পেট্রা ওয়ালেট চেক করা
-            if (!window.aptos) {
-                alert("দয়া করে পেট্রা (Petra) ওয়ালেট এক্সটেনশনটি ইনস্টল করুন!");
-                return;
-            }
-
-            try {
-                // ওয়ালেট কানেক্ট করা
-                const account = await window.aptos.connect();
-                
-                // বাটন আপডেট করা
-                btn.innerText = account.address.substring(0, 6) + "..." + account.address.substring(account.address.length - 4);
-                btn.classList.replace('bg-red-500', 'bg-green-600');
-                btn.classList.replace('hover:bg-red-600', 'hover:bg-green-700');
-            } catch (err) {
-                console.error(err);
-                alert("ওয়ালেট কানেকশন বিফল হয়েছে!");
+            // চেক করা হচ্ছে ব্রাউজারে অ্যাপটোস ওয়ালেট আছে কি না
+            if (typeof window.aptos !== 'undefined') {
+                try {
+                    // কানেক্ট করার অনুরোধ
+                    const account = await window.aptos.connect();
+                    
+                    // সফল হলে বাটন টেক্সট ও কালার আপডেট
+                    if (account && account.address) {
+                        btn.innerText = account.address.substring(0, 6) + "..." + account.address.substring(account.address.length - 4);
+                        btn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                        btn.classList.add('bg-green-600', 'hover:bg-green-700');
+                    }
+                } catch (err) {
+                    console.error("Connection rejected:", err);
+                    alert("ওয়ালেট কানেকশন বিফল হয়েছে! দয়া করে ওয়ালেটটি আনলক করুন অথবা পারমিশন দিন।");
+                }
+            } else {
+                alert("পেট্রা ওয়ালেট ডিটেক্ট করা যাচ্ছে না। দয়া করে Misses ব্রাউজারে পেট্রা এক্সটেনশনটি ওপেন রাখুন।");
             }
         }
     </script>
