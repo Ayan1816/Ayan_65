@@ -3,197 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShelbyVault - Meme Publisher</title>
-    
-    <!-- Tailwind CSS and FontAwesome Icons -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/desktop/css/all.min.css">
-    
+    <title>ShelbyVault</title>
+    <!-- Tailwind CSS for Design -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* আপনার মিম অ্যাপের ব্যাকগ্রাউন্ড স্টাইলিং */
-        body {
-            background-color: #0b0f19;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        /* ওয়ালেট কানেক্ট বাটন স্টাইল (দ্বিতীয় ভিডিওর মতো স্মুথ ইফেক্ট) */
-        .btn-wallet {
-            background-color: #ef4444; /* আপনার আগের লাল রঙের থিম */
-            color: #ffffff;
-            border: none;
-            padding: 8px 16px;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 140px;
-            text-align: center;
-        }
-
-        .btn-wallet:hover {
-            opacity: 0.9;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-        }
-
-        /* ওয়ালেট কানেক্ট হওয়ার পরের সবুজ স্টাইল */
-        .btn-wallet.connected {
-            background-color: #10b981 !important; /* সবুজ রঙ */
-        }
-
-        /* হোভার করে যখন ডিসকানেক্ট মোড অন হবে */
-        .btn-wallet.disconnect-mode {
-            background-color: #dc2626 !important; /* ডিসকানেক্ট লাল রঙ */
-            color: #ffffff;
-        }
+        body { background-color: #0b0f19; color: #ffffff; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
 
-    <!-- ShelbyVault মিম কার্ড ইন্টারফেস -->
-    <div class="w-full max-w-md p-6 bg-[#111827] border border-gray-800 rounded-2xl shadow-2xl space-y-6 mx-4">
-        
-        <!-- হেডার সেকশন (লোগো এবং ওয়ালেট বাটন) -->
-        <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2 text-[#38bdf8]">
-                <i class="fa-solid fa-camera-retro text-xl"></i>
-                <span class="text-lg font-bold tracking-wide">ShelbyVault</span>
-            </div>
-            <!-- ওয়ালেট বাটনটি এখানে সেট করা হয়েছে -->
-            <button id="walletBtn" class="btn-wallet" onclick="handleWalletAction()">
+    <!-- Main App Container -->
+    <div class="w-full max-w-md p-6 bg-[#111827] border border-gray-800 rounded-2xl shadow-2xl">
+        <div class="flex items-center justify-between mb-6">
+            <span class="text-lg font-bold">ShelbyVault</span>
+            <!-- Wallet Button -->
+            <button id="walletBtn" onclick="toggleWallet()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold">
                 Connect Petra
             </button>
         </div>
 
-        <!-- ড্রপজোন / ইমেজ আপলোড এরিয়া -->
-        <div class="border-2 border-dashed border-gray-700 rounded-xl p-8 flex flex-col items-center justify-center hover:border-gray-500 transition cursor-pointer bg-[#1f2937]/50">
-            <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 mb-2"></i>
-            <p class="text-sm font-semibold text-gray-300">Choose Meme Image</p>
-            <p class="text-xs text-gray-500 mt-1">PNG, JPG or GIF up to 10MB</p>
+        <!-- Meme Upload Box -->
+        <div class="border-2 border-dashed border-gray-600 p-8 rounded-xl text-center">
+            <p>Choose Meme Image</p>
+            <p class="text-xs text-gray-400">PNG, JPG or GIF up to 10MB</p>
         </div>
-
-        <!-- ক্যাপশন ইনপুট সেকশন -->
-        <div class="space-y-2">
-            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Meme Caption / Description</label>
-            <input type="text" placeholder="Enter a funny caption..." class="w-full px-4 py-3 bg-[#1f2937] border border-gray-700 rounded-xl text-sm focus:outline-none focus:border-[#38bdf8] transition text-gray-200">
-        </div>
-
-        <!-- পাবলিশ বাটন -->
-        <button onclick="publishMeme()" class="w-full py-3 bg-gradient-to-r from-[#0ea5e9] to-[#2563eb] hover:from-[#0284c7] hover:to-[#1d4ed8] text-white font-bold rounded-xl text-sm shadow-lg transition flex items-center justify-center space-x-2 cursor-pointer">
-            <i class="fa-solid fa-paper-plane"></i>
-            <span>Publish to ShelbyNet (Testnet)</span>
+        
+        <input type="text" placeholder="Enter a funny caption.." class="w-full mt-4 p-3 bg-gray-900 border border-gray-700 rounded-lg text-white">
+        
+        <button class="w-full mt-4 bg-blue-600 hover:bg-blue-700 p-3 rounded-lg font-bold">
+            Publish to ShelbyNet (Testnet)
         </button>
     </div>
 
-    <!-- ========================================== -->
-    <!-- ওয়ালেট কানেকশন জাভাস্ক্রিপ্ট লজিক -->
-    <!-- ========================================== -->
     <script>
-        // ১. স্টেট ভেরিয়েবলস
-        let userAptosAddress = null;
-        let isConnected = false;
+        async function toggleWallet() {
+            const btn = document.getElementById('walletBtn');
+            
+            // চেক করা হচ্ছে ওয়ালেট কানেক্টেড কি না
+            const isConnected = await window.aptos.isConnected();
 
-        // ২. Petra প্রোভাইডার চেক
-        function getPetraProvider() {
-            if ('aptos' in window) return window.aptos;
-            if ('petra' in window) return window.petra;
-            return null;
-        }
-
-        // ৩. বাটন ক্লিক হ্যান্ডলার
-        function handleWalletAction() {
             if (!isConnected) {
-                connectWallet();
+                try {
+                    // কানেক্ট করার চেষ্টা
+                    await window.aptos.connect();
+                    const account = await window.aptos.account();
+                    btn.innerText = account.address.substring(0, 6) + "...";
+                    btn.classList.replace('bg-red-500', 'bg-green-600');
+                } catch (err) {
+                    alert("ওয়ালেট কানেকশন রিজেক্ট হয়েছে।");
+                }
             } else {
-                disconnectWallet();
+                // ডিসকানেক্ট করা
+                await window.aptos.disconnect();
+                btn.innerText = "Connect Petra";
+                btn.classList.replace('bg-green-600', 'bg-red-500');
             }
-        }
-
-        // ৪. ওয়ালেট কানেক্ট করার লজিক
-        async function connectWallet() {
-            const provider = getPetraProvider();
-            
-            if (!provider) {
-                alert("Petra Aptos Wallet খুঁজে পাওয়া যায়নি! দয়া করে এক্সটেনশনটি ইনস্টল করুন।");
-                window.open("https://petra.app/", "_blank");
-                return;
-            }
-
-            try {
-                const response = await provider.connect();
-                userAptosAddress = response.address;
-                isConnected = true;
-                
-                setupConnectedUI(userAptosAddress);
-                alert("ওয়ালেট সফলভাবে কানেক্ট হয়েছে! 🎉");
-                
-            } catch (error) {
-                console.error("Connection rejected:", error);
-                alert("কানেকশন রিকোয়েস্ট বাতিল করা হয়েছে।");
-            }
-        }
-
-        // ৫. ওয়ালেট ডিসকানেক্ট করার লজিক
-        async function disconnectWallet() {
-            const provider = getPetraProvider();
-            if (!provider) return;
-
-            try {
-                await provider.disconnect();
-                userAptosAddress = null;
-                isConnected = false;
-                
-                resetWalletUI();
-                alert("ওয়ালেট ডিসকানেক্ট করা হয়েছে।");
-                
-            } catch (error) {
-                console.error("Disconnection failed:", error);
-            }
-        }
-
-        // ৬. কানেক্টেড UI এবং হোভার ইফেক্ট (ভিডিওর মতো এক্সাক্ট লজিক)
-        function setupConnectedUI(address) {
-            const walletBtn = document.getElementById("walletBtn");
-            if (!walletBtn) return;
-
-            const shortAddr = address.substring(0, 6) + "..." + address.substring(address.length - 4);
-            
-            walletBtn.innerText = shortAddr;
-            walletBtn.classList.add("connected");
-            
-            // মাউস উপরে আনলে বা টাচ করলে "Disconnect X" দেখাবে
-            walletBtn.onmouseover = function() {
-                this.innerText = "Disconnect X";
-                this.classList.add("disconnect-mode");
-            };
-            
-            // মাউস সরিয়ে নিলে আবার অ্যাড্রেস দেখাবে
-            walletBtn.onmouseout = function() {
-                this.innerText = shortAddr;
-                this.classList.remove("disconnect-mode");
-            };
-        }
-
-        // ७. ডিসকানেক্টের পর UI আগের অবস্থায় নেওয়া
-        function resetWalletUI() {
-            const walletBtn = document.getElementById("walletBtn");
-            if (!walletBtn) return;
-
-            walletBtn.innerText = "Connect Petra";
-            walletBtn.className = "btn-wallet"; 
-            
-            walletBtn.onmouseover = null;
-            walletBtn.onmouseout = null;
-        }
-
-        // ৮. মিম পাবলিশ করার সময় ওয়ালেট ভ্যালিডেশন চেক
-        function publishMeme() {
-            if (!isConnected || !userAptosAddress) {
-                alert("দয়া করে মিম পাবলিশ করার আগে আপনার Petra ওয়ালেটটি কানেক্ট করে নিন!");
-                return;
-            }
-            alert("আপনার অ্যাকাউন্ট প্রস্তুত আছে। ShelbyNet ট্রানজেকশন প্রসেস করা হচ্ছে...");
         }
     </script>
 </body>
