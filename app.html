@@ -160,50 +160,23 @@
         let userAptosAddress = null;
         let isConnected = false;
 
-        // ওয়ালেট প্রোভাইডার চেক করার নিরাপদ গ্লোবাল ফাংশন
+        // মিসেস ব্রাউজার এক্সটেনশন বা ইনজেক্টেড অবজেক্ট ডিটেক্ট করার জন্য
         function getWalletProvider() {
-            if (window.petra) return window.petra;
             if (window.aptos) return window.aptos;
+            if (window.petra) return window.petra;
             return null;
         }
 
-        // পেজ লোড হওয়া মাত্রই ওয়ালেটের অবস্থা চেক করার অটো লুপ
-        window.addEventListener('load', () => {
-            let checkCount = 0;
-            const interval = setInterval(async () => {
-                const wallet = getWalletProvider();
-                checkCount++;
-                
-                if (wallet) {
-                    clearInterval(interval);
-                    try {
-                        const alreadyConnected = await wallet.isConnected();
-                        if (alreadyConnected) {
-                            const account = await wallet.account();
-                            if (account && account.address) {
-                                setupConnectedUI(account.address);
-                            }
-                        }
-                    } catch (e) {
-                        console.log("Auto-detect check skipped or wallet locked.");
-                    }
-                }
-                
-                if (checkCount > 10) clearInterval(interval); // ১০ বার ট্রাই করে বন্ধ হবে
-            }, 300);
-        });
-
-        // বোতামে ক্লিক করলে এই ফাংশনটি রান করবে
         async function handleWalletAction() {
             const wallet = getWalletProvider();
             
             if (!wallet) {
-                alert("Petra ওয়ালেট খুঁজে পাওয়া যায়নি। দয়া করে নিশ্চিত করুন আপনি Petra অ্যাপের ভেতরের ব্রাউজার ট্যাবটি ব্যবহার করছেন।");
+                alert("Petra ওয়ালেট এক্সটেনশন পাওয়া যায়নি! দয়া করে নিশ্চিত করুন আপনার মিসেস ব্রাউজারে Petra এক্সটেনশনটি ইনস্টল এবং আনলক করা আছে।");
                 return;
             }
 
             if (isConnected) {
-                // ডিসকানেক্ট লজিক
+                // ডিসকানেক্ট করার মেকানিজম
                 try {
                     if (typeof wallet.disconnect === "function") {
                         await wallet.disconnect();
@@ -212,34 +185,29 @@
                     alert("ওয়ালেট সফলভাবে ডিসকানেক্ট করা হয়েছে।");
                 } catch (error) {
                     console.error("Disconnect error:", error);
-                    resetWalletUI(); // কোনো কারণে ইন্টারনাল এরর হলেও ইউজার এন্ডে ডিসকানেক্ট করে দেবে
+                    resetWalletUI(); 
                 }
             } else {
-                // কানেক্ট লজিক
+                // কানেক্ট করার মেকানিজম
                 try {
-                    // সরাসরি কানেক্ট উইন্ডো পপ-আপ রিকোয়েস্ট
-                    await wallet.connect();
+                    // এক্সটেনশনের জন্য ডাইরেক্ট কানেকশন মেথড
+                    const response = await wallet.connect();
+                    
+                    // কানেক্ট হওয়ার পর অ্যাকাউন্ট ডেটা রিড করা
                     const account = await wallet.account();
                     
                     if (account && account.address) {
                         setupConnectedUI(account.address);
-                        
-                        // নেটওয়ার্ক টেস্টনেটে নেওয়া নিশ্চিত করা
-                        try {
-                            if (typeof wallet.changeNetwork === "function") {
-                                await wallet.changeNetwork("Testnet");
-                            }
-                        } catch(nErr) {
-                            console.log("Network automated switch standard.");
-                        }
-
-                        alert("Aptos Testnet ওয়ালেট সফলভাবে কানেক্ট হয়েছে!");
-                    } else {
-                        alert("ওয়ালেট অ্যাকাউন্ট ইনফো পাওয়া যায়নি।");
+                        alert("Petra ওয়ালেট সফলভাবে কানেক্ট হয়েছে!");
+                    } else if (response && response.address) {
+                        setupConnectedUI(response.address);
+                        alert("Petra ওয়ালেট সফলভাবে কানেক্ট হয়েছে!");
                     }
                 } catch (error) {
                     console.error("Connection failed:", error);
-                    alert("কানেকশন রিকোয়েস্ট রেসপন্স করেনি। দয়া করে পেজটি একবার রিফ্রেশ দিয়ে আবার চেষ্টা করুন।");
+                    
+                    // এক্সটেনশন ব্যাকআপ স্ট্র্যাটেজি: রিকোয়েস্ট পাঠিয়ে ইউজারকে ম্যানুয়ালি চেক করতে বলা
+                    alert("কানেকশন রিকোয়েস্ট পাঠানো হয়েছে। যদি পপ-আপ না আসে, তবে ওপরে ডানদিকের এক্সটেনশন আইকন থেকে Petra ওয়ালেটে ক্লিক করে অনুমোদন (Approve) করে দিন।");
                 }
             }
         }
@@ -253,7 +221,7 @@
             walletBtn.innerText = shortAddr;
             walletBtn.className = "btn-wallet connected";
 
-            // মাউস বা টাচ ওভার ইফেক্ট (ডিসকানেক্ট টেক্সট দেখানোর জন্য)
+            // মাউস/টাচ ওভার ইফেক্ট (ডিসকানেক্ট টেক্সট শো করার জন্য)
             walletBtn.onmouseover = function() {
                 this.innerText = "Disconnect ❌";
                 this.classList.add('disconnect-mode');
