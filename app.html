@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShelbyVault</title>
-    <!-- Tailwind CSS for Design -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background-color: #0b0f19; color: #ffffff; }
-    </style>
+    <style> body { background-color: #0b0f19; color: #ffffff; } </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
 
@@ -16,21 +13,20 @@
     <div class="w-full max-w-md p-6 bg-[#111827] border border-gray-800 rounded-2xl shadow-2xl">
         <div class="flex items-center justify-between mb-6">
             <span class="text-lg font-bold">ShelbyVault</span>
-            <!-- Wallet Button -->
-            <button id="walletBtn" onclick="toggleWallet()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold">
+            <button id="walletBtn" onclick="toggleWallet()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold">
                 Connect Petra
             </button>
         </div>
 
         <!-- Meme Upload Box -->
-        <div class="border-2 border-dashed border-gray-600 p-8 rounded-xl text-center">
+        <div class="border-2 border-dashed border-gray-600 p-8 rounded-xl text-center mb-6">
             <p>Choose Meme Image</p>
             <p class="text-xs text-gray-400">PNG, JPG or GIF up to 10MB</p>
         </div>
-        
-        <input type="text" placeholder="Enter a funny caption.." class="w-full mt-4 p-3 bg-gray-900 border border-gray-700 rounded-lg text-white">
-        
-        <button class="w-full mt-4 bg-blue-600 hover:bg-blue-700 p-3 rounded-lg font-bold">
+
+        <input type="text" placeholder="Enter a funny caption.." class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg mb-4 text-white">
+
+        <button class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded-lg font-bold">
             Publish to ShelbyNet (Testnet)
         </button>
     </div>
@@ -39,24 +35,23 @@
         async function toggleWallet() {
             const btn = document.getElementById('walletBtn');
             
-            // চেক করা হচ্ছে ওয়ালেট কানেক্টেড কি না
-            const isConnected = await window.aptos.isConnected();
+            // পেট্রা ওয়ালেট চেক করা
+            if (!window.aptos) {
+                alert("দয়া করে পেট্রা (Petra) ওয়ালেট এক্সটেনশনটি ইনস্টল করুন!");
+                return;
+            }
 
-            if (!isConnected) {
-                try {
-                    // কানেক্ট করার চেষ্টা
-                    await window.aptos.connect();
-                    const account = await window.aptos.account();
-                    btn.innerText = account.address.substring(0, 6) + "...";
-                    btn.classList.replace('bg-red-500', 'bg-green-600');
-                } catch (err) {
-                    alert("ওয়ালেট কানেকশন রিজেক্ট হয়েছে।");
-                }
-            } else {
-                // ডিসকানেক্ট করা
-                await window.aptos.disconnect();
-                btn.innerText = "Connect Petra";
-                btn.classList.replace('bg-green-600', 'bg-red-500');
+            try {
+                // ওয়ালেট কানেক্ট করা
+                const account = await window.aptos.connect();
+                
+                // বাটন আপডেট করা
+                btn.innerText = account.address.substring(0, 6) + "..." + account.address.substring(account.address.length - 4);
+                btn.classList.replace('bg-red-500', 'bg-green-600');
+                btn.classList.replace('hover:bg-red-600', 'hover:bg-green-700');
+            } catch (err) {
+                console.error(err);
+                alert("ওয়ালেট কানেকশন বিফল হয়েছে!");
             }
         }
     </script>
