@@ -33,7 +33,7 @@ Web3 enthusiast focused on blockchain, DeAI, and decentralized infrastructure. P
 ---
 
 ### 📬 Connect With Me
-[Twitter](https://twitter.com/yourhandle) | [LinkedIn](https://linkedin.com/in/yourhandle) | [Discord](https://discord.com)
+[Twitter](https://x.com/ayan_ar65) | [LinkedIn](https://www.linkedin.com/in/md-mohin-b6a4912b9) | [Discord](https://discordapp.com/users/1202922198734610502)
 
 ---
 *Made with ❤️ by Ayan*
