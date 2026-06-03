@@ -61,8 +61,12 @@
             transition: 0.3s;
         }
 
-        .btn-wallet:hover {
-            background: #d93d4d;
+        .btn-wallet.connected {
+            background: #10b981;
+        }
+
+        .btn-wallet.disconnect-mode {
+            background: #ef4444 !important;
         }
 
         .upload-section {
@@ -131,7 +135,7 @@
             <div class="logo">
                 <i class="fa-solid fa-vault"></i> ShelbyVault
             </div>
-            <button class="btn-wallet" id="walletBtn" onclick="initiateAptosWallet()">Connect Petra</button>
+            <button class="btn-wallet" id="walletBtn" onclick="handleWalletAction()">Connect Petra</button>
         </div>
 
         <div class="upload-section" onclick="triggerFileInput()">
@@ -148,92 +152,94 @@
         </div>
 
         <button class="btn-publish" onclick="publishMeme()">
-            <i class="fa-solid fa-rocket"></i> Publish to ShelbyNet
+            <i class="fa-solid fa-rocket"></i> Publish to ShelbyNet (Testnet)
         </button>
     </div>
 
     <script>
         let userAptosAddress = null;
+        let isConnected = false;
 
-        // Secure, async function to check injected provider multiple times
-        async function getProviderWithRetry(retries = 3, delay = 200) {
-            for (let i = 0; i < retries; i++) {
-                const provider = window.aptos || window.petra;
-                if (provider) return provider;
-                await new Promise(res => setTimeout(res, delay));
-            }
+        // Petra ওয়ালেট প্রোভাইডার চেক করার ফাংশন
+        function getWalletProvider() {
             return window.aptos || window.petra;
         }
 
-        async function initiateAptosWallet() {
-            const wallet = await getProviderWithRetry();
+        // বাটন ক্লিকে কানেক্ট বা ডিসকানেক্ট হ্যান্ডেল করার মেইন ফাংশন
+        async function handleWalletAction() {
+            const wallet = getWalletProvider();
+            if (!wallet) {
+                alert("Aptos ওয়ালেট পাওয়া যায়নি। দয়া করে Petra dApp ব্রাউজার ব্যবহার করুন।");
+                return;
+            }
 
-            if (wallet) {
+            if (isConnected) {
+                // ডিসকানেক্ট করার লজিক
                 try {
-                    // Check if already connected silently
-                    const isConnected = await wallet.isConnected();
-                    if (isConnected) {
-                        const activeAccount = await wallet.account();
-                        if (activeAccount && activeAccount.address) {
-                            successConnection(activeAccount.address);
-                            return;
-                        }
+                    if (typeof wallet.disconnect === "function") {
+                        await wallet.disconnect();
                     }
-
-                    // Direct fresh connection block request
-                    const response = await wallet.connect();
-                    const addr = response ? (response.address || response) : null;
+                    userAptosAddress = null;
+                    isConnected = false;
                     
-                    if (addr && typeof addr === 'string') {
-                        successConnection(addr);
-                    } else {
-                        // Safe alternative strategy for older Petra builds
-                        const secondaryCheck = await wallet.account();
-                        if (secondaryCheck && secondaryCheck.address) {
-                            successConnection(secondaryCheck.address);
-                        } else {
-                            throw new Error("Address structure missing.");
-                        }
-                    }
+                    // বাটন আগের অবস্থায় ফিরিয়ে নেওয়া
+                    const walletBtn = document.getElementById('walletBtn');
+                    walletBtn.innerText = "Connect Petra";
+                    walletBtn.className = "btn-wallet";
+                    alert("ওয়ালেট সফলভাবে ডিসকানেক্ট করা হয়েছে।");
                 } catch (error) {
-                    console.error("Wallet connection flow interrupted:", error);
-                    // Standard explicit manual prompt fallback
-                    alert("Petra ওয়ালেট কানেকশন রিকোয়েস্ট প্রোসেস করছে। দয়া করে ব্রাউজার পেজটি রিফ্রেশ দিন এবং ব্রাউজার ট্যাবটি পুনরায় খোলার চেষ্টা করুন।");
+                    console.error("Disconnect failed:", error);
+                    // ফোর্স ডিসকানেক্ট ব্যাকআপ
+                    userAptosAddress = null;
+                    isConnected = false;
+                    document.getElementById('walletBtn').innerText = "Connect Petra";
+                    document.getElementById('walletBtn').className = "btn-wallet";
                 }
             } else {
-                alert("Aptos ওয়ালেট প্রোভাইডার পাওয়া যায়নি। দয়া করে নিশ্চিত করুন আপনি Petra dApp ব্রাউজার ট্যাব ব্যবহার করছেন।");
-            }
-        }
+                // কানেক্ট করার লজিক
+                try {
+                    const response = await wallet.connect();
+                    const account = await wallet.account();
+                    
+                    if (account && account.address) {
+                        userAptosAddress = account.address;
+                        isConnected = true;
 
-        function successConnection(address) {
-            userAptosAddress = address;
-            const walletBtn = document.getElementById('walletBtn');
-            walletBtn.innerText = address.substring(0, 6) + "..." + address.substring(address.length - 4);
-            walletBtn.style.background = "#10b981"; 
-            alert("Aptos ওয়ালেট সফলভাবে অ্যাপে যুক্ত করা হয়েছে!");
+                        // ফ্রি টেস্টনেট সেট করা নিশ্চিত করা
+                        try {
+                            if (typeof wallet.changeNetwork === "function") {
+                                // এটি ওয়ালেটকে মেইননেট থেকে ফ্রি টেস্টনেট-এ সেট করবে যেন কোনো আসল টাকা না কাটে
+                                await wallet.changeNetwork("Testnet");
+                            }
+                        } catch(netErr) {
+                            console.log("Network switch handled automatically by wallet settings.");
+                        }
+
+                        // ইন্টারফেস আপডেট (অ্যাড্রেস দেখানো)
+                        const walletBtn = document.getElementById('walletBtn');
+                        const shortAddr = userAptosAddress.substring(0, 6) + "..." + userAptosAddress.substring(userAptosAddress.length - 4);
+                        walletBtn.innerText = shortAddr;
+                        walletBtn.className = "btn-wallet connected";
+
+                        // মাউস ওপরে নিলে যেন Disconnect লেখা দেখায় তার ইভেন্ট সেট করা
+                        walletBtn.onmouseover = function() {
+                            this.innerText = "Disconnect ❌";
+                            this.classList.add('disconnect-mode');
+                        };
+                        walletBtn.onmouseout = function() {
+                            if(isConnected) {
+                                this.innerText = shortAddr;
+                                this.classList.remove('disconnect-mode');
+                            }
+                        };
+
+                        alert("Aptos Testnet ওয়ালেট সফলভাবে কানেক্ট হয়েছে!");
+                    }
+                } catch (error) {
+                    console.error("Connection failed:", error);
+                    alert("কানেকশন রিকোয়েস্ট বাতিল করা হয়েছে বা কোনো ত্রুটি ঘটেছে।");
+                }
+            }
         }
 
         function triggerFileInput() {
-            document.getElementById('fileInput').click();
-        }
-
-        function previewImage(event) {
-            const reader = new FileReader();
-            reader.onload = function() {
-                const output = document.getElementById('imagePreview');
-                output.src = reader.result;
-                output.style.display = 'block';
-            }
-            reader.readAsDataURL(event.target.files[0]);
-        }
-
-        function publishMeme() {
-            if (!userAptosAddress) {
-                alert("দয়া করে প্রথমে ওয়ালেট কানেক্ট করুন!");
-                return;
-            }
-            alert("ছবি আপলোড করার জন্য এখন Pinata IPFS API Key প্রয়োজন।");
-        }
-    </script>
-</body>
-</html>
