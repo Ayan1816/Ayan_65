@@ -1,50 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AYAN - Portfolio & ShelbyVault</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-[#0b0f19] text-white p-6">
-
-    <div class="text-center mb-10">
-        <img src="https://github.com/ayan1816.png" class="w-24 h-24 rounded-full mx-auto" alt="AYAN">
-        <h1 class="text-2xl font-bold mt-4">AYAN</h1>
-        <p class="text-gray-400">Dhaka, Bangladesh</p>
-    </div>
-
-    <div class="w-full max-w-md mx-auto bg-[#111827] border border-gray-800 p-6 rounded-2xl shadow-2xl">
-        <h2 class="text-lg font-bold mb-4">ShelbyVault</h2>
-        
-        <button id="walletBtn" onclick="connect()" class="w-full bg-red-600 hover:bg-red-700 py-3 rounded-lg font-bold transition">
-            Connect Petra
-        </button>
-
-        <div class="border-2 border-dashed border-gray-600 p-8 rounded-xl text-center mt-4">
-            <p class="text-sm">Choose Meme Image</p>
+<!-- Profile & About Section -->
+<section class="profile-about">
+    <div class="profile-card">
+        <!-- এখানে সরাসরি আপনার GitHub প্রোফাইলের ছবি -->
+        <div class="avatar-placeholder" style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; margin: 0 auto 15px; background: #222a36; display: flex; align-items: center; justify-content: center;">
+            <img src="https://github.com/ayan1816.png" alt="AYAN" style="width: 100%; height: 100%; object-fit: cover; display: block;">
         </div>
-        
-        <input type="text" placeholder="Enter a funny caption.." class="w-full mt-4 p-3 bg-gray-900 border border-gray-700 rounded-lg text-white">
-        <button class="w-full mt-4 bg-blue-600 p-3 rounded-lg font-bold">Publish to ShelbyNet</button>
+        <h3>AYAN</h3>
+        <p><i class="fa-solid fa-location-dot"></i> Dhaka, Bangladesh</p>
     </div>
+</section>
 
-    <script>
-        async function connect() {
-            const btn = document.getElementById('walletBtn');
-            if (window.aptos) {
-                try {
-                    const response = await window.aptos.connect();
-                    btn.innerText = "Connected";
-                    btn.classList.replace('bg-red-600', 'bg-green-600');
-                    console.log("Connected:", response);
-                } catch (e) {
-                    alert("ওয়ালেট কানেকশন রিজেক্ট হয়েছে।");
-                }
-            } else {
-                alert("Petra ওয়ালেট খুঁজে পাওয়া যায়নি!");
-            }
-        }
-    </script>
-</body>
-</html>
+<!-- My Experience Section -->
+<section class="experience">
+    <h2>My Experience</h2>
+    <div class="tags">
+        <!-- আপনার ট্যাগগুলো এখানে থাকবে -->
+    </div>
+</section>
+
+<!-- Achievements Section -->
+<section class="achievements">
+    <div class="achievement-card">
+        <div class="card-badge">🏅 OG Ambassador & Contributor</div>
+        <h3 class="project-title">dTelecom</h3>
+        <div class="card-content">
+            <p>Contributing as an OG Ambassador and Phase 1 & 2 Contributor. Supporting decentralized communication networks, building community engagement, and driving ecosystem growth.</p>
+        </div>
+        <div class="card-buttons">
+            <!-- বাটন থাকলে এখানে হবে -->
+        </div>
+    </div>
+</section>
