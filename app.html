@@ -1,59 +1,188 @@
-"use client";
-
-import React, { useState } from 'react';
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
-
-export default function DashboardContent() {
-  const { connect, disconnect, connected, account, signAndSubmitTransaction, network } = useWallet();
-  const [uploading, setUploading] = useState(false);
-
-  // ১. ওয়ালেট কানেক্ট করার বাটন ফাংশন
-  const handleConnect = async () => {
-    try {
-      await connect("Petra"); // Petra ওয়ালেট পপ-আপ ওপেন করবে
-    } catch (err) {
-      console.error("Connection Error:", err);
-      alert("ওয়ালেট কানেক্ট হয়নি।");
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shelby Meme Studio - JUBAYIR69</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f0f1a;
+      color: white;
+      margin: 0;
+      padding: 20px;
     }
-  };
-
-  // ২. মেম পাবলিশ বা ট্রানজেকশন ফাংশন
-  const publishMeme = async () => {
-    if (!connected) return alert("আগে ওয়ালেট কানেক্ট করুন!");
-
-    setUploading(true);
-    try {
-      const transactionPayload = {
-        data: {
-          function: "0x1::coin::transfer",
-          typeArguments: ["0x1::aptos_coin::AptosCoin"],
-          functionArguments: [
-            "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a",
-            "100000"
-          ]
-        }
-      };
-
-      const response = await signAndSubmitTransaction(transactionPayload);
-      alert("সফল হয়েছে! ট্রানজেকশন হ্যাশ: " + response.hash);
-      
-    } catch (err) {
-      console.error("Publish Error:", err);
-      alert("ট্রানজেকশন ব্যর্থ হয়েছে। ওয়ালেট Testnet-এ আছে কি না চেক করুন।");
-    } finally {
-      setUploading(false);
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
     }
-  };
-
-  return (
-    <div>
-      {!connected ? (
-        <button onClick={handleConnect}>Connect Wallet</button>
-      ) : (
-        <button onClick={publishMeme} disabled={uploading}>
-          {uploading ? "Publishing..." : "Publish Meme"}
-        </button>
-      )}
+    .left {
+      flex: 1;
+      min-width: 400px;
+    }
+    .right {
+      flex: 1;
+      min-width: 400px;
+    }
+    .canvas-container {
+      position: relative;
+      background: #000;
+      border: 2px solid #444;
+      margin-bottom: 15px;
+    }
+    #memeCanvas {
+      width: 100%;
+      max-width: 500px;
+      height: auto;
+      display: block;
+    }
+    input, button, select {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      background: #1a1a2e;
+      border: 1px solid #555;
+      color: white;
+      border-radius: 5px;
+    }
+    button {
+      background: #00ff88;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .color-btn {
+      padding: 12px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .theme-blue { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .theme-sunset { background: linear-gradient(135deg, #ff6b6b, #feca57); }
+    .theme-green { background: linear-gradient(135deg, #00ff88, #00cc66); }
+  </style>
+</head>
+<body>
+  <h1 style="text-align:center;">🚀 Shelby Meme Studio (JUBAYIR69 Edition)</h1>
+  
+  <div class="container">
+    <!-- Left Side - Preview -->
+    <div class="left">
+      <div class="canvas-container">
+        <canvas id="memeCanvas" width="500" height="500"></canvas>
+      </div>
+      <input type="file" id="imageUpload" accept="image/*">
+      <div>
+        <button onclick="downloadMeme()">📥 Download PNG</button>
+      </div>
     </div>
-  );
-}
+
+    <!-- Right Side - Controls -->
+    <div class="right">
+      <h3>Top Text</h3>
+      <input type="text" id="topText" placeholder="JUBAYIR69" value="JUBAYIR69" oninput="updateMeme()">
+
+      <h3>Bottom Text</h3>
+      <input type="text" id="bottomText" placeholder="AWS IS COLD" value="AWS IS COLD" oninput="updateMeme()">
+
+      <h3>Theme / Color</h3>
+      <button class="color-btn theme-blue" onclick="changeTheme(0)">Blue</button>
+      <button class="color-btn theme-sunset" onclick="changeTheme(1)">Sunset</button>
+      <button class="color-btn theme-green" onclick="changeTheme(2)">Green</button>
+
+      <hr>
+      <button onclick="publishToShelby()" style="background:#ff00ff; padding:15px; font-size:18px;">
+        🚀 Publish to Shelby (Testnet)
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('memeCanvas');
+    const ctx = canvas.getContext('2d');
+    let currentImage = null;
+    let currentTheme = 0;
+
+    const themes = [
+      {bg: '#1e3a8a', text: '#ffffff'},     // Blue
+      {bg: '#b91c1c', text: '#fcd34d'},     // Sunset
+      {bg: '#166534', text: '#86efac'}      // Green
+    ];
+
+    // Load default image
+    function loadDefaultImage() {
+      const img = new Image();
+      img.src = 'https://picsum.photos/id/1015/500/500'; // Default meme style image
+      img.onload = () => {
+        currentImage = img;
+        updateMeme();
+      };
+    }
+
+    function updateMeme() {
+      if (!currentImage) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
+
+      const top = document.getElementById('topText').value;
+      const bottom = document.getElementById('bottomText').value;
+      const theme = themes[currentTheme];
+
+      // Top Text
+      ctx.font = 'bold 48px Arial';
+      ctx.fillStyle = theme.text;
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 6;
+      ctx.textAlign = 'center';
+      ctx.strokeText(top, canvas.width/2, 80);
+      ctx.fillText(top, canvas.width/2, 80);
+
+      // Bottom Text
+      ctx.strokeText(bottom, canvas.width/2, canvas.height - 60);
+      ctx.fillText(bottom, canvas.width/2, canvas.height - 60);
+    }
+
+    document.getElementById('imageUpload').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const img = new Image();
+          img.onload = () => {
+            currentImage = img;
+            updateMeme();
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    function changeTheme(n) {
+      currentTheme = n;
+      updateMeme();
+    }
+
+    function downloadMeme() {
+      const link = document.createElement('a');
+      link.download = 'my-meme.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function publishToShelby() {
+      alert("✅ Transaction Ready!\n\nPetra Wallet এ Approve করো।\n\n(এটা ডেমো। আসল অ্যাপে Wallet Connect হবে)");
+      // এখানে পরে Aptos Petra wallet integration যোগ করা যাবে
+    }
+
+    // Start
+    loadDefaultImage();
+  </script>
+</body>
+</html>
