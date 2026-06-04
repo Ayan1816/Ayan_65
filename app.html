@@ -1,91 +1,53 @@
-"use client";
+// --- Wallet & Transaction Logic ---
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
-
-// Helper functions (আপনার আগের কোড অনুযায়ী)
-const getFirstElement = (array: any) => array.slice(0, 1).pop();
-const getSecondElement = (array: any) => array.slice(1, 2).pop();
-
-function DashboardContent() {
-  const { connect, disconnect, connected, account, network, signAndSubmitTransaction } = useWallet();
-
-  // States
-  const [filesUploaded, setFilesUploaded] = useState(4);
-  const [uploading, setUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState("meme");
-  const [topText, setTopText] = useState("SHELBY IS HOT");
-  const [bottomText, setBottomText] = useState("AWS IS COLD");
-  const [activeGradient, setActiveGradient] = useState("blue");
-  const [uploadedMemes, setUploadedMemes] = useState<any[]>([]);
-  const [customImage, setCustomImage] = useState<HTMLImageElement | null>(null);
-  const [showToast, setShowToast] = useState(false);
-
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const customBgInputRef = useRef<HTMLInputElement>(null);
-
-  // Connection Handler
-  const handleConnect = async () => {
+// ১. ওয়ালেট কানেক্ট ফাংশন
+const handleConnect = async () => {
     try {
-      await connect("Petra");
+        // সরাসরি Petra ওয়ালেটকে কল করা
+        if (window.aptos) {
+            await window.aptos.connect();
+        } else {
+            alert("আপনার ফোনে Petra Wallet অ্যাপটি ওপেন করুন এবং এর ভেতরের ব্রাউজার দিয়ে এই সাইটটি দেখুন।");
+        }
     } catch (error) {
-      console.error("Connection failed:", error);
-      alert("Petra Wallet connection failed. Please try again.");
+        console.error(error);
+        alert("কানেকশন এরর! নিশ্চিত করুন আপনি Petra অ্যাপে আছেন।");
     }
-  };
+};
 
-  // Transaction Handler
-  const publishMeme = async () => {
-    if (!connected) return alert("Please connect your Petra Wallet first!");
-    
-    // Network Validation
-    if (network && network.name.toLowerCase().indexOf("testnet") === -1) {
-      alert("Please switch your Petra Wallet to Testnet.");
-      return;
+// ২. মেম পাবলিশ বা ট্রানজেকশন ফাংশন
+const publishMeme = async () => {
+    // ওয়ালেট কানেক্টেড কি না চেক করা
+    const isConnected = await window.aptos.isConnected();
+    if (!isConnected) {
+        alert("আগে ওয়ালেট কানেক্ট করুন!");
+        return;
     }
 
     setUploading(true);
+
     try {
-      const transactionPayload = {
-        data: {
-          function: "0x1::coin::transfer",
-          typeArguments: ["0x1::aptos_coin::AptosCoin"],
-          functionArguments: [
-            "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a",
-            "100000"
-          ]
-        }
-      };
+        const payload = {
+            type: "entry_function_payload",
+            function: "0x1::coin::transfer",
+            type_arguments: ["0x1::aptos_coin::AptosCoin"],
+            arguments: [
+                "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a",
+                "100000"
+            ]
+        };
 
-      const response = await signAndSubmitTransaction(transactionPayload);
-      
-      // Update UI
-      const newMeme = {
-        id: Date.now(),
-        name: `Meme_${Date.now()}.png`,
-        tx: response.hash
-      };
-
-      setUploadedMemes((prev) => [newMeme, ...prev]);
-      setFilesUploaded((prev) => prev + 1);
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 5000);
+        // ট্রানজেকশন সাবমিট করা
+        const response = await window.aptos.signAndSubmitTransaction(payload);
+        
+        console.log("Success:", response);
+        setFilesUploaded((prev) => prev + 1);
+        alert("ট্রানজেকশন সফল হয়েছে!");
 
     } catch (error) {
-      console.error("Publishing error:", error);
-      alert("Transaction failed or was cancelled!");
+        console.error(error);
+        alert("ট্রানজেকশন ব্যর্থ হয়েছে। ওয়ালেটের নেটওয়ার্ক 'Testnet' এ সেট করা আছে কি না চেক করুন।");
     } finally {
-      setUploading(false);
+        setUploading(false);
     }
-  };
-
-  // UI rendering logic here...
-  // (আপনার আগের কোডের বাকি অংশ ঠিক একইভাবে থাকবে)
-
-  return (
-    // আপনার মূল HTML ডিজাইন অনুযায়ী কম্পোনেন্ট রিটার্ন করুন
-    <div>
-        {/* আপনার বাটনগুলোতে onClick={handleConnect} এবং publishMeme ব্যবহার করুন */}
-    </div>
-  );
-}
+};
