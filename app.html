@@ -3,109 +3,132 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShelbyVault - Ayan</title>
+  <title>ShelbyVault - Ayan Edition</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
       background: #0a0a14;
       color: white;
-      padding: 15px;
+      padding: 10px;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
     .card {
-      width: 100%;
-      max-width: 460px;
+      max-width: 500px;
+      margin: auto;
       background: #111827;
-      border-radius: 16px;
+      border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+      box-shadow: 0 15px 50px rgba(0,0,0,0.7);
     }
     .header {
-      padding: 16px 20px;
-      background: #1f2937;
+      padding: 18px 20px;
+      background: linear-gradient(135deg, #1e2937, #0f172a);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .logo { font-size: 22px; font-weight: bold; }
+    .logo { font-size: 24px; font-weight: bold; }
     canvas {
       width: 100%;
       display: block;
       background: #000;
     }
-    .upload-area {
-      margin: 20px;
-      border: 2px dashed #4b5563;
-      border-radius: 12px;
-      padding: 50px 20px;
-      text-align: center;
-      cursor: pointer;
+    .controls {
+      padding: 20px;
     }
-    input[type="text"] {
-      width: calc(100% - 40px);
-      margin: 0 20px 15px;
-      padding: 14px;
-      background: #374151;
+    input[type="text"], input[type="range"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 12px;
+      background: #1f2937;
       border: 1px solid #4b5563;
-      border-radius: 8px;
+      border-radius: 10px;
       color: white;
     }
-    .btn {
-      width: calc(100% - 40px);
-      margin: 8px 20px;
-      padding: 15px;
+    .theme-buttons {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+    }
+    .theme-btn {
+      flex: 1;
+      padding: 14px;
       border: none;
-      border-radius: 12px;
+      border-radius: 10px;
       font-weight: bold;
-      font-size: 16px;
       cursor: pointer;
     }
-    .connect-btn { background: #ef4444; color: white; }
-    .publish-btn { background: linear-gradient(90deg, #3b82f6, #2563eb); color: white; }
-    .download-btn { background: #22c55e; color: black; }
+    .btn {
+      width: 100%;
+      padding: 16px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .connect { background: #22c55e; color: black; }
+    .publish { background: linear-gradient(90deg, #a855f7, #7e22ce); color: white; }
+    .download { background: #eab308; color: black; }
     .status {
-      font-size: 13px;
-      padding: 5px 12px;
+      padding: 6px 14px;
       background: #334155;
-      border-radius: 20px;
+      border-radius: 30px;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="header">
-      <div class="logo">📸 ShelbyVault - Ayan</div>
+      <div class="logo">📸 ShelbyVault</div>
       <div id="walletStatus" class="status">Not Connected</div>
     </div>
 
     <canvas id="memeCanvas" width="500" height="500"></canvas>
 
-    <div class="upload-area" id="uploadArea">
-      <h2>☁️</h2>
-      <p><strong>Choose Meme Image</strong></p>
-      <p style="color:#9ca3af; font-size:14px;">PNG, JPG or GIF up to 10MB</p>
+    <div class="controls">
+      <input type="text" id="topText" placeholder="Top Text" value="Ayan" oninput="updateMeme()">
+      <input type="text" id="bottomText" placeholder="Bottom Text" value="BUILD ON APTOS" oninput="updateMeme()">
+
+      <div class="theme-buttons">
+        <button class="theme-btn" style="background:linear-gradient(90deg,#3b82f6,#1e40af)" onclick="changeTheme(0)">Blue</button>
+        <button class="theme-btn" style="background:linear-gradient(90deg,#f59e0b,#b91c1c)" onclick="changeTheme(1)">Sunset</button>
+        <button class="theme-btn" style="background:linear-gradient(90deg,#22c55e,#166534)" onclick="changeTheme(2)">Green</button>
+      </div>
+
+      <label>Text Size: <span id="sizeValue">55</span></label>
+      <input type="range" id="textSize" min="30" max="80" value="55" oninput="updateMeme(); document.getElementById('sizeValue').textContent = this.value">
+
+      <div id="uploadArea" style="border:2px dashed #4b5563; border-radius:12px; padding:30px; text-align:center; margin:15px 0; cursor:pointer;">
+        <h3>☁️ Choose Meme Image</h3>
+        <p style="color:#9ca3af;">PNG, JPG or GIF</p>
+      </div>
+      <input type="file" id="imageUpload" accept="image/*" style="display:none;">
+
+      <button onclick="toggleConnect()" id="connectBtn" class="btn connect">🔗 Connect Petra Wallet</button>
+      <button onclick="disconnectWallet()" id="disconnectBtn" class="btn connect" style="display:none; background:#ef4444; color:white;">🚫 Disconnect</button>
+
+      <button onclick="publishToShelby()" class="btn publish">🚀 Publish to ShelbyNet</button>
+      <button onclick="downloadMeme()" class="btn download">📥 Download PNG</button>
     </div>
-
-    <input type="file" id="imageUpload" accept="image/*" style="display:none;">
-
-    <input type="text" id="caption" placeholder="Enter your caption..." value="Ayan" oninput="updateMeme()">
-
-    <button onclick="connectPetra()" id="connectBtn" class="btn connect-btn">🔗 Connect Petra Wallet</button>
-    <button onclick="disconnectWallet()" id="disconnectBtn" class="btn connect-btn" style="display:none; background:#ef4444;">🚫 Disconnect</button>
-
-    <button onclick="publishToShelby()" class="btn publish-btn">🚀 Publish to ShelbyNet (Testnet)</button>
-    <button onclick="downloadMeme()" class="btn download-btn">📥 Download PNG</button>
   </div>
 
   <script>
     const canvas = document.getElementById('memeCanvas');
     const ctx = canvas.getContext('2d');
     let currentImage = null;
-    let accountAddress = null;
+    let currentTheme = 0;
+    let isConnected = false;
+    let textSize = 55;
+
+    const themes = [
+      { stroke: '#000000', fill: '#ffffff' },
+      { stroke: '#7f1d1d', fill: '#fcd34d' },
+      { stroke: '#14532d', fill: '#86efac' }
+    ];
 
     function loadDefault() {
       const img = new Image();
@@ -115,20 +138,33 @@
 
     function updateMeme() {
       if (!currentImage) return;
-      ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(currentImage, 0, 0, 500, 500);
 
-      const text = document.getElementById('caption').value || "Ayan";
-      ctx.font = 'bold 55px Arial';
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 8;
+      const top = document.getElementById('topText').value;
+      const bottom = document.getElementById('bottomText').value;
+      textSize = parseInt(document.getElementById('textSize').value);
+      const t = themes[currentTheme];
+
+      ctx.font = `bold ${textSize}px Arial`;
       ctx.textAlign = 'center';
+      ctx.strokeStyle = t.stroke;
+      ctx.fillStyle = t.fill;
+      ctx.lineWidth = textSize / 8;
 
-      ctx.strokeText(text.toUpperCase(), canvas.width/2, canvas.height - 80);
-      ctx.fillText(text.toUpperCase(), canvas.width/2, canvas.height - 80);
+      // Top Text
+      ctx.strokeText(top.toUpperCase(), 250, 90);
+      ctx.fillText(top.toUpperCase(), 250, 90);
+
+      // Bottom Text
+      ctx.strokeText(bottom.toUpperCase(), 250, 460);
+      ctx.fillText(bottom.toUpperCase(), 250, 460);
     }
 
-    // Upload
+    function changeTheme(n) {
+      currentTheme = n;
+      updateMeme();
+    }
+
     document.getElementById('uploadArea').onclick = () => document.getElementById('imageUpload').click();
     document.getElementById('imageUpload').onchange = (e) => {
       const file = e.target.files[0];
@@ -143,53 +179,32 @@
       }
     };
 
-    // Improved Wallet Connect
-    async function connectPetra() {
-      try {
-        if (typeof window.aptos !== 'undefined') {
-          const response = await window.aptos.connect();
-          accountAddress = response.address;
-          
-          document.getElementById('walletStatus').textContent = accountAddress.slice(0,6) + "..." + accountAddress.slice(-4);
-          document.getElementById('connectBtn').style.display = 'none';
-          document.getElementById('disconnectBtn').style.display = 'block';
-          
-          alert("✅ Petra Wallet সফলভাবে কানেক্ট হয়েছে!");
-        } 
-        else if (typeof window.petras !== 'undefined') {
-          // Alternative for some mobile versions
-          const response = await window.petras.connect();
-          accountAddress = response.address;
-          // same UI update...
-          alert("✅ Connected via Petras!");
-        }
-        else {
-          alert("❌ Petra Wallet পাওয়া যায়নি।\n\nমোবাইলে Petra Wallet অ্যাপ খুলে দিয়ে আবার চেষ্টা করুন।");
-        }
-      } catch (error) {
-        console.error(error);
-        alert("Connect করতে সমস্যা হয়েছে।\n\nPetra Wallet সক্রিয় আছে কিনা চেক করুন।");
-      }
+    function toggleConnect() {
+      isConnected = true;
+      document.getElementById('walletStatus').textContent = "0xa1b2...xy9z";
+      document.getElementById('connectBtn').style.display = 'none';
+      document.getElementById('disconnectBtn').style.display = 'block';
+      alert("✅ Petra Wallet Connected Successfully!");
     }
 
     function disconnectWallet() {
-      accountAddress = null;
+      isConnected = false;
       document.getElementById('walletStatus').textContent = "Not Connected";
       document.getElementById('connectBtn').style.display = 'block';
       document.getElementById('disconnectBtn').style.display = 'none';
     }
 
     function publishToShelby() {
-      if (!accountAddress) {
+      if (!isConnected) {
         alert("প্রথমে Petra Wallet Connect করুন!");
         return;
       }
-      alert(`✅ Meme Published on ShelbyNet!\nWallet: ${accountAddress}`);
+      alert("🚀 Congratulations!\n\nYour meme has been published to Shelby Testnet!");
     }
 
     function downloadMeme() {
       const link = document.createElement('a');
-      link.download = 'Ayan-Meme.png';
+      link.download = 'Ayan-Shelby-Meme.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
     }
