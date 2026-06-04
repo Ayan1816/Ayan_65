@@ -1,154 +1,62 @@
-"use client";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShelbyVault</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style> body { background-color: #0b0f19; color: #ffffff; } </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
+    <div class="w-full max-w-md bg-[#111827] border border-gray-800 rounded-2xl shadow-2xl p-6">
+        <div class="flex items-center justify-between mb-6">
+            <span class="text-lg font-bold">ShelbyVault</span>
+            <!-- বাটন: এটি কানেক্ট/ডিসকানেক্ট টগল করবে -->
+            <button id="connectBtn" onclick="toggleWallet()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold transition-all">
+                Connect Wallet
+            </button>
+        </div>
 
-export default function DashboardContent() {
-  const { connect, disconnect, connected, account, network, signAndSubmitTransaction } = useWallet();
+        <div class="border-2 border-dashed border-gray-600 p-8 rounded-xl text-center mb-6">
+            <p>Choose Meme Image</p>
+        </div>
 
-  // State Management
-  const [filesUploaded, setFilesUploaded] = useState(4);
-  const [uploading, setUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState("meme");
-  const [topText, setTopText] = useState("SHELBY IS HOT");
-  const [bottomText, setBottomText] = useState("AWS IS COLD");
-  const [activeGradient, setActiveGradient] = useState("blue");
-  const [expiration, setExpiration] = useState("1day");
-  const [watermark, setWatermark] = useState(true);
-  const [uploadedMemes, setUploadedMemes] = useState<any[]>([]);
-  const [customImage, setCustomImage] = useState<any>(null);
-  const [showToast, setShowToast] = useState(false);
+        <button class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded-lg font-bold">
+            Publish
+        </button>
+    </div>
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const customBgInputRef = useRef<HTMLInputElement>(null);
+    <script>
+        async function toggleWallet() {
+            const btn = document.getElementById("connectBtn");
 
-  // Sound Function
-  const playSound = (freq: number) => {
-    if (typeof window === 'undefined') return;
-    try {
-      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      gain.gain.setValueAtTime(0.05, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.15);
-    } catch (e) {}
-  };
+            // পেট্রা ওয়ালেট আছে কি না চেক
+            if (!window.aptos) {
+                alert("Petra Wallet not found! Please install it.");
+                return;
+            }
 
-  // Canvas Drawing Logic
-  useEffect(() => {
-    if (activeTab !== "meme") return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+            try {
+                // ওয়ালেটের বর্তমান অবস্থা চেক
+                const isConnected = await window.aptos.isConnected();
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (customImage) {
-      ctx.drawImage(customImage, 0, 0, canvas.width, canvas.height);
-    } else {
-      const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      if (activeGradient === "sunset") {
-        grad.addColorStop(0, "#f43f5e");
-        grad.addColorStop(1, "#eab308");
-      } else if (activeGradient === "green") {
-        grad.addColorStop(0, "#10b981");
-        grad.addColorStop(1, "#06b6d4");
-      } else {
-        grad.addColorStop(0, "#3b82f6");
-        grad.addColorStop(1, "#8b5cf6");
-      }
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    ctx.fillStyle = "white";
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 6;
-    ctx.textAlign = "center";
-    ctx.font = "bold 24px sans-serif";
-
-    ctx.textBaseline = "top";
-    ctx.strokeText(topText.toUpperCase(), canvas.width / 2, 20);
-    ctx.fillText(topText.toUpperCase(), canvas.width / 2, 20);
-
-    ctx.textBaseline = "bottom";
-    ctx.strokeText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
-    ctx.fillText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
-
-    if (watermark) {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-      ctx.fillRect(canvas.width - 130, canvas.height - 35, 120, 25);
-      ctx.fillStyle = "#38bdf8";
-      ctx.font = "bold 9px sans-serif";
-      ctx.fillText("SHELBY HOT SECURE", canvas.width - 70, canvas.height - 23);
-    }
-  }, [topText, bottomText, activeGradient, customImage, watermark, activeTab]);
-
-  const handleConnect = async () => {
-    playSound(600);
-    try {
-      await connect("Petra");
-    } catch (error) {
-      alert("Petra Wallet connection failed!");
-    }
-  };
-
-  const handleDisconnect = async () => {
-    playSound(300);
-    try {
-      await disconnect();
-    } catch (error) {}
-  };
-
-  const getAddress = () => {
-    if (!account) return "";
-    return account.address.toString().substring(0, 6) + "..." + account.address.toString().substring(account.address.length - 4);
-  };
-
-  const publishMeme = async () => {
-    if (!connected) return alert("Please connect your Petra Wallet first!");
-    
-    setUploading(true);
-    playSound(800);
-
-    try {
-      const transactionPayload = {
-        data: {
-          function: "0x1::coin::transfer",
-          typeArguments: ["0x1::aptos_coin::AptosCoin"],
-          functionArguments: [
-            "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a",
-            "100000"
-          ]
+                if (isConnected) {
+                    // যদি কানেক্ট থাকে, ডিসকানেক্ট করবে
+                    await window.aptos.disconnect();
+                    btn.innerText = "Connect Wallet";
+                } else {
+                    // কানেক্ট না থাকলে কানেক্ট করবে
+                    await window.aptos.connect();
+                    const account = await window.aptos.account();
+                    // ছোট করে অ্যাড্রেস দেখাবে
+                    btn.innerText = account.address.substring(0, 6) + "..." + account.address.substring(account.address.length - 4);
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Connection failed! Please unlock your wallet.");
+            }
         }
-      };
-
-      await signAndSubmitTransaction(transactionPayload);
-      setFilesUploaded(prev => prev + 1);
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 5000);
-    } catch (error) {
-      alert("Transaction failed!");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  return (
-    <main style={{ minHeight: "100vh", background: "#0a0f24", color: "white", padding: "20px" }}>
-      {/* UI Content here (rest of your layout) */}
-      <button onClick={connected ? handleDisconnect : handleConnect}>
-        {connected ? "Disconnect" : "Connect Wallet"}
-      </button>
-      {/* Rest of your JSX code */}
-    </main>
-  );
-}
+    </script>
+</body>
+</html>
