@@ -75,8 +75,8 @@
     <canvas id="memeCanvas" width="500" height="500"></canvas>
 
     <div class="controls">
-      <input type="text" id="topText" placeholder="Top Text" value="AYAN" oninput="updateMeme()">
-      <input type="text" id="bottomText" placeholder="Bottom Text" value="BUILD ON APTOS" oninput="updateMeme()">
+      <input type="text" id="topText" value="AYAN" oninput="updateMeme()">
+      <input type="text" id="bottomText" value="BUILD ON APTOS" oninput="updateMeme()">
 
       <div class="theme-buttons">
         <button class="theme-btn" style="background:linear-gradient(90deg,#3b82f6,#1e40af)" onclick="changeTheme(0)">Blue</button>
@@ -96,7 +96,7 @@
       <button onclick="connectWallet()" id="connectBtn" class="btn connect">🔗 Connect Petra Wallet</button>
       <button onclick="disconnectWallet()" id="disconnectBtn" class="btn connect" style="display:none;background:#ef4444;color:white;">🚫 Disconnect</button>
 
-      <button onclick="publishToShelby()" class="btn publish">🚀 Publish to ShelbyNet</button>
+      <button onclick="publishToShelby()" class="btn publish">🚀 Publish to ShelbyNet (Testnet)</button>
       <button onclick="downloadMeme()" class="btn download">📥 Download PNG</button>
     </div>
   </div>
@@ -143,7 +143,6 @@
 
     function changeTheme(n) { currentTheme = n; updateMeme(); }
 
-    // Upload
     document.getElementById('uploadArea').onclick = () => document.getElementById('imageUpload').click();
     document.getElementById('imageUpload').onchange = (e) => {
       const file = e.target.files[0];
@@ -158,24 +157,25 @@
       }
     };
 
-    // ================= REAL WALLET CONNECT =================
+    // Improved Connect Function
     async function connectWallet() {
       try {
-        if (window.aptos) {
-          const response = await window.aptos.connect();
-          accountAddress = response.address;
-
-          document.getElementById('walletStatus').innerHTML = `✅ \( {accountAddress.slice(0,6)}... \){accountAddress.slice(-4)}`;
-          document.getElementById('connectBtn').style.display = 'none';
-          document.getElementById('disconnectBtn').style.display = 'block';
-
-          alert("🎉 Petra Wallet Connected Successfully!\n\nAddress: " + accountAddress);
-        } else {
-          alert("❌ Petra Wallet পাওয়া যায়নি!\n\nটিপস:\n1. Petra Wallet অ্যাপ খুলে রাখো\n2. মোবাইল ব্রাউজারে dApp support চেক করো\n3. অথবা ডেস্কটপে চেষ্টা করো");
+        if (typeof window.aptos === 'undefined') {
+          alert("❌ Petra Wallet পাওয়া যায়নি!\n\nকরণীয়:\n1. Petra Wallet অ্যাপ খুলে রাখুন\n2. ব্রাউজার রিফ্রেশ করুন\n3. ডেস্কটপ কম্পিউটারে চেষ্টা করুন (সবচেয়ে ভালো কাজ করে)");
+          return;
         }
+
+        const response = await window.aptos.connect();
+        accountAddress = response.address;
+
+        document.getElementById('walletStatus').innerHTML = `✅ \( {accountAddress.slice(0,6)}... \){accountAddress.slice(-4)}`;
+        document.getElementById('connectBtn').style.display = 'none';
+        document.getElementById('disconnectBtn').style.display = 'block';
+
+        alert("🎉 Petra Wallet সফলভাবে কানেক্ট হয়েছে!\n\nএখন Publish বাটন চাপলে Testnet-এ যাবে।");
       } catch (error) {
         console.error(error);
-        alert("Connect করতে সমস্যা হয়েছে। আবার চেষ্টা করো।");
+        alert("Connect করতে সমস্যা হয়েছে।\n\nPetra Wallet অ্যাপ খুলে আবার চেষ্টা করুন।");
       }
     }
 
@@ -188,10 +188,10 @@
 
     function publishToShelby() {
       if (!accountAddress) {
-        alert("প্রথমে Petra Wallet Connect করুন!");
+        alert("প্রথমে Connect Petra Wallet বাটনে ক্লিক করুন!");
         return;
       }
-      alert(`✅ Meme Published to ShelbyNet!\n\nWallet: ${accountAddress}`);
+      alert(`✅ Meme Published Successfully on Shelby Testnet!\n\nWallet: ${accountAddress}\n\n(এটা ডেমো — আসল ফি কাটতে হলে Aptos Testnet-এ ফান্ড থাকতে হবে)`);
     }
 
     function downloadMeme() {
