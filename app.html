@@ -1,30 +1,51 @@
-// সংশোধিত handleConnect ফাংশন
-const handleConnect = async () => {
-    playSound(600);
+"use client";
+
+import React, { useState, useEffect, useRef } from 'react';
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
+
+// Helper functions (আপনার আগের কোড অনুযায়ী)
+const getFirstElement = (array: any) => array.slice(0, 1).pop();
+const getSecondElement = (array: any) => array.slice(1, 2).pop();
+
+function DashboardContent() {
+  const { connect, disconnect, connected, account, network, signAndSubmitTransaction } = useWallet();
+
+  // States
+  const [filesUploaded, setFilesUploaded] = useState(4);
+  const [uploading, setUploading] = useState(false);
+  const [activeTab, setActiveTab] = useState("meme");
+  const [topText, setTopText] = useState("SHELBY IS HOT");
+  const [bottomText, setBottomText] = useState("AWS IS COLD");
+  const [activeGradient, setActiveGradient] = useState("blue");
+  const [uploadedMemes, setUploadedMemes] = useState<any[]>([]);
+  const [customImage, setCustomImage] = useState<HTMLImageElement | null>(null);
+  const [showToast, setShowToast] = useState(false);
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const customBgInputRef = useRef<HTMLInputElement>(null);
+
+  // Connection Handler
+  const handleConnect = async () => {
     try {
-      // কানেক্ট করার সময় 'Petra' ওয়ালেটটি যেন সরাসরি সিলেক্ট হয়
       await connect("Petra");
     } catch (error) {
-      console.error("Connection error:", error);
+      console.error("Connection failed:", error);
       alert("Petra Wallet connection failed. Please try again.");
     }
-};
+  };
 
-// সংশোধিত publishMeme ফাংশন (আপনার ভিডিওর ট্রানজেকশন ফ্লো অনুযায়ী)
-const publishMeme = async () => {
+  // Transaction Handler
+  const publishMeme = async () => {
     if (!connected) return alert("Please connect your Petra Wallet first!");
     
-    // নেটওয়ার্ক চেক
+    // Network Validation
     if (network && network.name.toLowerCase().indexOf("testnet") === -1) {
-      alert("Please ensure your Petra Wallet is set to 'Testnet'.");
+      alert("Please switch your Petra Wallet to Testnet.");
       return;
     }
 
     setUploading(true);
-    playSound(800);
-
     try {
-      // ট্রানজেকশন পেলোড
       const transactionPayload = {
         data: {
           function: "0x1::coin::transfer",
@@ -38,24 +59,33 @@ const publishMeme = async () => {
 
       const response = await signAndSubmitTransaction(transactionPayload);
       
-      // ভিডিওতে যেমন দেখা যাচ্ছে, সফল হওয়ার পর নতুন আইটেম যোগ করা
-      const randomId = Math.floor(Math.random() * 10000);
+      // Update UI
       const newMeme = {
-        id: randomId,
-        name: `Meme_${randomId}.png`,
+        id: Date.now(),
+        name: `Meme_${Date.now()}.png`,
         tx: response.hash
       };
 
       setUploadedMemes((prev) => [newMeme, ...prev]);
       setFilesUploaded((prev) => prev + 1);
-      
       setShowToast(true);
       setTimeout(() => setShowToast(false), 5000);
 
-    } catch (error: any) {
+    } catch (error) {
       console.error("Publishing error:", error);
       alert("Transaction failed or was cancelled!");
     } finally {
       setUploading(false);
     }
-};
+  };
+
+  // UI rendering logic here...
+  // (আপনার আগের কোডের বাকি অংশ ঠিক একইভাবে থাকবে)
+
+  return (
+    // আপনার মূল HTML ডিজাইন অনুযায়ী কম্পোনেন্ট রিটার্ন করুন
+    <div>
+        {/* আপনার বাটনগুলোতে onClick={handleConnect} এবং publishMeme ব্যবহার করুন */}
+    </div>
+  );
+}
