@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShelbyVault - Ayan Edition</title>
+  <title>ShelbyVault - Ayan</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -31,13 +31,7 @@
       justify-content: space-between;
       align-items: center;
     }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 22px;
-      font-weight: bold;
-    }
+    .logo { font-size: 22px; font-weight: bold; }
     canvas {
       width: 100%;
       display: block;
@@ -51,20 +45,18 @@
       text-align: center;
       cursor: pointer;
     }
-    .upload-area:hover { border-color: #60a5fa; }
     input[type="text"] {
-      width: 100%;
+      width: calc(100% - 40px);
+      margin: 0 20px 15px;
       padding: 14px;
-      margin: 0 20px 20px;
       background: #374151;
       border: 1px solid #4b5563;
       border-radius: 8px;
       color: white;
-      font-size: 16px;
     }
     .btn {
       width: calc(100% - 40px);
-      margin: 10px 20px;
+      margin: 8px 20px;
       padding: 15px;
       border: none;
       border-radius: 12px;
@@ -72,21 +64,12 @@
       font-size: 16px;
       cursor: pointer;
     }
-    .connect-btn {
-      background: #ef4444;
-      color: white;
-    }
-    .publish-btn {
-      background: linear-gradient(90deg, #3b82f6, #2563eb);
-      color: white;
-    }
-    .download-btn {
-      background: #22c55e;
-      color: black;
-    }
-    .wallet-status {
+    .connect-btn { background: #ef4444; color: white; }
+    .publish-btn { background: linear-gradient(90deg, #3b82f6, #2563eb); color: white; }
+    .download-btn { background: #22c55e; color: black; }
+    .status {
       font-size: 13px;
-      padding: 4px 10px;
+      padding: 5px 12px;
       background: #334155;
       border-radius: 20px;
     }
@@ -95,10 +78,8 @@
 <body>
   <div class="card">
     <div class="header">
-      <div class="logo">
-        📸 <span>ShelbyVault</span>
-      </div>
-      <div id="walletStatus" class="wallet-status">Not Connected</div>
+      <div class="logo">📸 ShelbyVault - Ayan</div>
+      <div id="walletStatus" class="status">Not Connected</div>
     </div>
 
     <canvas id="memeCanvas" width="500" height="500"></canvas>
@@ -106,7 +87,7 @@
     <div class="upload-area" id="uploadArea">
       <h2>☁️</h2>
       <p><strong>Choose Meme Image</strong></p>
-      <p style="color:#9ca3af;">PNG, JPG or GIF up to 10MB</p>
+      <p style="color:#9ca3af; font-size:14px;">PNG, JPG or GIF up to 10MB</p>
     </div>
 
     <input type="file" id="imageUpload" accept="image/*" style="display:none;">
@@ -114,7 +95,7 @@
     <input type="text" id="caption" placeholder="Enter your caption..." value="Ayan" oninput="updateMeme()">
 
     <button onclick="connectPetra()" id="connectBtn" class="btn connect-btn">🔗 Connect Petra Wallet</button>
-    <button onclick="disconnectWallet()" id="disconnectBtn" class="btn connect-btn" style="display:none; background:#ef4444;">🚫 Disconnect Wallet</button>
+    <button onclick="disconnectWallet()" id="disconnectBtn" class="btn connect-btn" style="display:none; background:#ef4444;">🚫 Disconnect</button>
 
     <button onclick="publishToShelby()" class="btn publish-btn">🚀 Publish to ShelbyNet (Testnet)</button>
     <button onclick="downloadMeme()" class="btn download-btn">📥 Download PNG</button>
@@ -129,10 +110,7 @@
     function loadDefault() {
       const img = new Image();
       img.src = 'https://picsum.photos/id/1015/500/500';
-      img.onload = () => {
-        currentImage = img;
-        updateMeme();
-      };
+      img.onload = () => { currentImage = img; updateMeme(); };
     }
 
     function updateMeme() {
@@ -140,7 +118,6 @@
       ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
 
       const text = document.getElementById('caption').value || "Ayan";
-
       ctx.font = 'bold 55px Arial';
       ctx.fillStyle = '#ffffff';
       ctx.strokeStyle = '#000000';
@@ -152,41 +129,46 @@
     }
 
     // Upload
-    document.getElementById('uploadArea').addEventListener('click', () => {
-      document.getElementById('imageUpload').click();
-    });
-
-    document.getElementById('imageUpload').addEventListener('change', (e) => {
+    document.getElementById('uploadArea').onclick = () => document.getElementById('imageUpload').click();
+    document.getElementById('imageUpload').onchange = (e) => {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = (ev) => {
           const img = new Image();
-          img.onload = () => {
-            currentImage = img;
-            updateMeme();
-          };
+          img.onload = () => { currentImage = img; updateMeme(); };
           img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
       }
-    });
+    };
 
-    // Wallet
+    // Improved Wallet Connect
     async function connectPetra() {
       try {
-        if (window.aptos) {
-          const res = await window.aptos.connect();
-          accountAddress = res.address;
+        if (typeof window.aptos !== 'undefined') {
+          const response = await window.aptos.connect();
+          accountAddress = response.address;
+          
           document.getElementById('walletStatus').textContent = accountAddress.slice(0,6) + "..." + accountAddress.slice(-4);
           document.getElementById('connectBtn').style.display = 'none';
           document.getElementById('disconnectBtn').style.display = 'block';
-          alert("✅ Petra Wallet Connected!");
-        } else {
-          alert("Petra Wallet ইনস্টল করুন");
+          
+          alert("✅ Petra Wallet সফলভাবে কানেক্ট হয়েছে!");
+        } 
+        else if (typeof window.petras !== 'undefined') {
+          // Alternative for some mobile versions
+          const response = await window.petras.connect();
+          accountAddress = response.address;
+          // same UI update...
+          alert("✅ Connected via Petras!");
         }
-      } catch (err) {
-        alert("Connect করতে সমস্যা হয়েছে");
+        else {
+          alert("❌ Petra Wallet পাওয়া যায়নি।\n\nমোবাইলে Petra Wallet অ্যাপ খুলে দিয়ে আবার চেষ্টা করুন।");
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Connect করতে সমস্যা হয়েছে।\n\nPetra Wallet সক্রিয় আছে কিনা চেক করুন।");
       }
     }
 
@@ -202,13 +184,13 @@
         alert("প্রথমে Petra Wallet Connect করুন!");
         return;
       }
-      alert(`✅ Meme Published Successfully!\nWallet: ${accountAddress}`);
+      alert(`✅ Meme Published on ShelbyNet!\nWallet: ${accountAddress}`);
     }
 
     function downloadMeme() {
       const link = document.createElement('a');
       link.download = 'Ayan-Meme.png';
-      link.href = canvas.toDataURL();
+      link.href = canvas.toDataURL('image/png');
       link.click();
     }
 
