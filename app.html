@@ -1,50 +1,61 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShelbyVault</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>body { background-color: #0a0f24; color: white; }</style>
-</head>
-<body class="flex items-center justify-center min-h-screen">
+// সংশোধিত handleConnect ফাংশন
+const handleConnect = async () => {
+    playSound(600);
+    try {
+      // কানেক্ট করার সময় 'Petra' ওয়ালেটটি যেন সরাসরি সিলেক্ট হয়
+      await connect("Petra");
+    } catch (error) {
+      console.error("Connection error:", error);
+      alert("Petra Wallet connection failed. Please try again.");
+    }
+};
 
-    <div class="w-full max-w-md bg-[#111827] p-6 rounded-2xl border border-gray-800 shadow-2xl">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-xl font-bold">ShelbyVault</h1>
-            <button id="connectBtn" onclick="tryConnect()" class="bg-red-600 px-4 py-2 rounded-lg font-bold">
-                Connect Wallet
-            </button>
-        </div>
-        <div class="border-2 border-dashed border-gray-600 p-8 rounded-xl text-center">
-            <p>Choose Meme Image</p>
-        </div>
-    </div>
+// সংশোধিত publishMeme ফাংশন (আপনার ভিডিওর ট্রানজেকশন ফ্লো অনুযায়ী)
+const publishMeme = async () => {
+    if (!connected) return alert("Please connect your Petra Wallet first!");
+    
+    // নেটওয়ার্ক চেক
+    if (network && network.name.toLowerCase().indexOf("testnet") === -1) {
+      alert("Please ensure your Petra Wallet is set to 'Testnet'.");
+      return;
+    }
 
-    <script>
-        async function tryConnect() {
-            const btn = document.getElementById("connectBtn");
-            
-            // চেক করা হচ্ছে পেট্রা ওয়ালেট ইনস্টল আছে কি না
-            if (typeof window.aptos === 'undefined') {
-                alert("Petra Wallet পাওয়া যায়নি। দয়া করে মিসেস ব্রাউজারে Petra Wallet এক্সটেনশনটি ওপেন রাখুন।");
-                return;
-            }
+    setUploading(true);
+    playSound(800);
 
-            try {
-                // কানেক্ট রিকোয়েস্ট
-                await window.aptos.connect();
-                const account = await window.aptos.account();
-                
-                // কানেক্ট হলে বাটন আপডেট
-                btn.innerText = "Connected";
-                btn.style.backgroundColor = "green";
-                alert("সাফল্যের সাথে কানেক্ট হয়েছে!");
-            } catch (err) {
-                console.error(err);
-                alert("কানেকশন এরর: আপনার ওয়ালেটটি আনলক আছে তো?");
-            }
+    try {
+      // ট্রানজেকশন পেলোড
+      const transactionPayload = {
+        data: {
+          function: "0x1::coin::transfer",
+          typeArguments: ["0x1::aptos_coin::AptosCoin"],
+          functionArguments: [
+            "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a",
+            "100000"
+          ]
         }
-    </script>
-</body>
-</html>
+      };
+
+      const response = await signAndSubmitTransaction(transactionPayload);
+      
+      // ভিডিওতে যেমন দেখা যাচ্ছে, সফল হওয়ার পর নতুন আইটেম যোগ করা
+      const randomId = Math.floor(Math.random() * 10000);
+      const newMeme = {
+        id: randomId,
+        name: `Meme_${randomId}.png`,
+        tx: response.hash
+      };
+
+      setUploadedMemes((prev) => [newMeme, ...prev]);
+      setFilesUploaded((prev) => prev + 1);
+      
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 5000);
+
+    } catch (error: any) {
+      console.error("Publishing error:", error);
+      alert("Transaction failed or was cancelled!");
+    } finally {
+      setUploading(false);
+    }
+};
