@@ -29,14 +29,8 @@
       align-items: center;
     }
     .logo { font-size: 24px; font-weight: bold; }
-    canvas {
-      width: 100%;
-      display: block;
-      background: #000;
-    }
-    .controls {
-      padding: 20px;
-    }
+    canvas { width: 100%; display: block; background: #000; }
+    .controls { padding: 20px; }
     input[type="text"], input[type="range"] {
       width: 100%;
       padding: 12px;
@@ -46,11 +40,7 @@
       border-radius: 10px;
       color: white;
     }
-    .theme-buttons {
-      display: flex;
-      gap: 10px;
-      margin: 15px 0;
-    }
+    .theme-buttons { display: flex; gap: 10px; margin: 15px 0; }
     .theme-btn {
       flex: 1;
       padding: 14px;
@@ -72,25 +62,20 @@
     .connect { background: #22c55e; color: black; }
     .publish { background: linear-gradient(90deg, #a855f7, #7e22ce); color: white; }
     .download { background: #eab308; color: black; }
-    .status {
-      padding: 6px 14px;
-      background: #334155;
-      border-radius: 30px;
-      font-size: 14px;
-    }
+    .status { padding: 8px 16px; background: #334155; border-radius: 30px; font-size: 14px; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="header">
-      <div class="logo">📸 ShelbyVault</div>
+      <div class="logo">📸 ShelbyVault - Ayan</div>
       <div id="walletStatus" class="status">Not Connected</div>
     </div>
 
     <canvas id="memeCanvas" width="500" height="500"></canvas>
 
     <div class="controls">
-      <input type="text" id="topText" placeholder="Top Text" value="Ayan" oninput="updateMeme()">
+      <input type="text" id="topText" placeholder="Top Text" value="AYAN" oninput="updateMeme()">
       <input type="text" id="bottomText" placeholder="Bottom Text" value="BUILD ON APTOS" oninput="updateMeme()">
 
       <div class="theme-buttons">
@@ -100,16 +85,16 @@
       </div>
 
       <label>Text Size: <span id="sizeValue">55</span></label>
-      <input type="range" id="textSize" min="30" max="80" value="55" oninput="updateMeme(); document.getElementById('sizeValue').textContent = this.value">
+      <input type="range" id="textSize" min="30" max="80" value="55" oninput="updateMeme(); document.getElementById('sizeValue').textContent=this.value">
 
-      <div id="uploadArea" style="border:2px dashed #4b5563; border-radius:12px; padding:30px; text-align:center; margin:15px 0; cursor:pointer;">
+      <div id="uploadArea" style="border:2px dashed #4b5563;border-radius:12px;padding:30px;text-align:center;margin:15px 0;cursor:pointer;">
         <h3>☁️ Choose Meme Image</h3>
         <p style="color:#9ca3af;">PNG, JPG or GIF</p>
       </div>
       <input type="file" id="imageUpload" accept="image/*" style="display:none;">
 
-      <button onclick="toggleConnect()" id="connectBtn" class="btn connect">🔗 Connect Petra Wallet</button>
-      <button onclick="disconnectWallet()" id="disconnectBtn" class="btn connect" style="display:none; background:#ef4444; color:white;">🚫 Disconnect</button>
+      <button onclick="connectWallet()" id="connectBtn" class="btn connect">🔗 Connect Petra Wallet</button>
+      <button onclick="disconnectWallet()" id="disconnectBtn" class="btn connect" style="display:none;background:#ef4444;color:white;">🚫 Disconnect</button>
 
       <button onclick="publishToShelby()" class="btn publish">🚀 Publish to ShelbyNet</button>
       <button onclick="downloadMeme()" class="btn download">📥 Download PNG</button>
@@ -121,8 +106,7 @@
     const ctx = canvas.getContext('2d');
     let currentImage = null;
     let currentTheme = 0;
-    let isConnected = false;
-    let textSize = 55;
+    let accountAddress = null;
 
     const themes = [
       { stroke: '#000000', fill: '#ffffff' },
@@ -142,29 +126,24 @@
 
       const top = document.getElementById('topText').value;
       const bottom = document.getElementById('bottomText').value;
-      textSize = parseInt(document.getElementById('textSize').value);
+      const size = parseInt(document.getElementById('textSize').value);
       const t = themes[currentTheme];
 
-      ctx.font = `bold ${textSize}px Arial`;
+      ctx.font = `bold ${size}px Arial`;
       ctx.textAlign = 'center';
       ctx.strokeStyle = t.stroke;
       ctx.fillStyle = t.fill;
-      ctx.lineWidth = textSize / 8;
+      ctx.lineWidth = size / 8;
 
-      // Top Text
       ctx.strokeText(top.toUpperCase(), 250, 90);
       ctx.fillText(top.toUpperCase(), 250, 90);
-
-      // Bottom Text
       ctx.strokeText(bottom.toUpperCase(), 250, 460);
       ctx.fillText(bottom.toUpperCase(), 250, 460);
     }
 
-    function changeTheme(n) {
-      currentTheme = n;
-      updateMeme();
-    }
+    function changeTheme(n) { currentTheme = n; updateMeme(); }
 
+    // Upload
     document.getElementById('uploadArea').onclick = () => document.getElementById('imageUpload').click();
     document.getElementById('imageUpload').onchange = (e) => {
       const file = e.target.files[0];
@@ -179,27 +158,40 @@
       }
     };
 
-    function toggleConnect() {
-      isConnected = true;
-      document.getElementById('walletStatus').textContent = "0xa1b2...xy9z";
-      document.getElementById('connectBtn').style.display = 'none';
-      document.getElementById('disconnectBtn').style.display = 'block';
-      alert("✅ Petra Wallet Connected Successfully!");
+    // ================= REAL WALLET CONNECT =================
+    async function connectWallet() {
+      try {
+        if (window.aptos) {
+          const response = await window.aptos.connect();
+          accountAddress = response.address;
+
+          document.getElementById('walletStatus').innerHTML = `✅ \( {accountAddress.slice(0,6)}... \){accountAddress.slice(-4)}`;
+          document.getElementById('connectBtn').style.display = 'none';
+          document.getElementById('disconnectBtn').style.display = 'block';
+
+          alert("🎉 Petra Wallet Connected Successfully!\n\nAddress: " + accountAddress);
+        } else {
+          alert("❌ Petra Wallet পাওয়া যায়নি!\n\nটিপস:\n1. Petra Wallet অ্যাপ খুলে রাখো\n2. মোবাইল ব্রাউজারে dApp support চেক করো\n3. অথবা ডেস্কটপে চেষ্টা করো");
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Connect করতে সমস্যা হয়েছে। আবার চেষ্টা করো।");
+      }
     }
 
     function disconnectWallet() {
-      isConnected = false;
+      accountAddress = null;
       document.getElementById('walletStatus').textContent = "Not Connected";
       document.getElementById('connectBtn').style.display = 'block';
       document.getElementById('disconnectBtn').style.display = 'none';
     }
 
     function publishToShelby() {
-      if (!isConnected) {
+      if (!accountAddress) {
         alert("প্রথমে Petra Wallet Connect করুন!");
         return;
       }
-      alert("🚀 Congratulations!\n\nYour meme has been published to Shelby Testnet!");
+      alert(`✅ Meme Published to ShelbyNet!\n\nWallet: ${accountAddress}`);
     }
 
     function downloadMeme() {
