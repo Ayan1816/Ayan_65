@@ -2,51 +2,47 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShelbyVault</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style> body { background-color: #0a0f24; color: #ffffff; } </style>
+    <style>body { background-color: #0a0f24; color: white; }</style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
 
-    <!-- Main Container - আগের ডিজাইন অনুযায়ী -->
-    <div class="w-full max-w-md bg-[#111827] border border-gray-800 rounded-2xl shadow-2xl p-6 m-4">
-        <div class="flex items-center justify-between mb-6">
-            <span class="text-lg font-bold">ShelbyVault</span>
-            <button id="connectBtn" onclick="connectPetra()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold transition-all">
+    <div class="w-full max-w-md bg-[#111827] p-6 rounded-2xl border border-gray-800 shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-xl font-bold">ShelbyVault</h1>
+            <button id="connectBtn" onclick="tryConnect()" class="bg-red-600 px-4 py-2 rounded-lg font-bold">
                 Connect Wallet
             </button>
         </div>
-
-        <div class="border-2 border-dashed border-gray-600 p-8 rounded-xl text-center mb-6">
+        <div class="border-2 border-dashed border-gray-600 p-8 rounded-xl text-center">
             <p>Choose Meme Image</p>
-            <p class="text-xs text-gray-400">PNG, JPG or GIF up to 10MB</p>
         </div>
-
-        <input type="text" placeholder="Enter a funny caption.." class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg mb-4 text-white">
-
-        <button class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded-lg font-bold">
-            Publish to ShelbyNet (Testnet)
-        </button>
-        <p class="text-center text-gray-500 text-xs mt-4">Your secure meme hub</p>
     </div>
 
     <script>
-        async function connectPetra() {
+        async function tryConnect() {
             const btn = document.getElementById("connectBtn");
-
-            if (!window.aptos) {
-                alert("Petra Wallet not found! Please ensure you are in Petra/Misses browser.");
+            
+            // ১. ওয়ালেট চেক
+            if (typeof window.aptos === 'undefined') {
+                alert("আপনার Petra Wallet এক্সটেনশনটি মিসেস ব্রাউজারে লোড হয়নি। দয়া করে এক্সটেনশন সেকশন থেকে Petra এনাবল করুন।");
                 return;
             }
 
             try {
-                await window.aptos.connect();
+                // ২. কানেক্ট রিকোয়েস্ট (সরাসরি)
+                const result = await window.aptos.connect();
+                console.log("Connect result:", result);
+                
+                // ৩. কানেক্ট হলে অ্যাড্রেস দেখাবে
                 const account = await window.aptos.account();
-                btn.innerText = account.address.substring(0, 6) + "..." + account.address.substring(account.address.length - 4);
-                btn.style.backgroundColor = "#059669";
-            } catch (error) {
-                alert("Connection failed! Please unlock your wallet.");
+                btn.innerText = "Connected";
+                btn.style.backgroundColor = "green";
+                alert("ওয়ালেট কানেক্ট হয়েছে!");
+            } catch (err) {
+                console.error(err);
+                alert("কানেকশন এরর: " + err.message + ". দয়া করে নিশ্চিত করুন আপনার Petra Wallet অ্যাপে নেটওয়ার্ক 'Testnet' এ সেট করা আছে।");
             }
         }
     </script>
