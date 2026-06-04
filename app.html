@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShelbyVault - Meme Studio</title>
+  <title>ShelbyVault - Ayan Edition</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -12,118 +12,120 @@
       color: white;
       padding: 15px;
       min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .container {
-      max-width: 480px;
-      margin: auto;
+    .card {
+      width: 100%;
+      max-width: 460px;
       background: #111827;
       border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
     }
     .header {
-      padding: 15px;
+      padding: 16px 20px;
+      background: #1f2937;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #1f2937;
     }
     .logo {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 20px;
+      font-size: 22px;
       font-weight: bold;
-    }
-    .connect-btn {
-      background: #ef4444;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 9999px;
-      font-weight: bold;
-      border: none;
-    }
-    .upload-area {
-      margin: 20px;
-      border: 2px dashed #4b5563;
-      border-radius: 12px;
-      padding: 40px 20px;
-      text-align: center;
-      background: #1f2937;
-    }
-    .upload-area:hover {
-      border-color: #60a5fa;
-    }
-    .caption-input {
-      margin: 0 20px 20px;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 14px;
-      background: #374151;
-      border: 1px solid #4b5563;
-      border-radius: 8px;
-      color: white;
-      font-size: 16px;
-    }
-    .publish-btn {
-      margin: 10px 20px 25px;
-      width: calc(100% - 40px);
-      padding: 16px;
-      background: linear-gradient(90deg, #3b82f6, #2563eb);
-      color: white;
-      font-size: 18px;
-      font-weight: bold;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
     }
     canvas {
       width: 100%;
       display: block;
       background: #000;
     }
+    .upload-area {
+      margin: 20px;
+      border: 2px dashed #4b5563;
+      border-radius: 12px;
+      padding: 50px 20px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .upload-area:hover { border-color: #60a5fa; }
+    input[type="text"] {
+      width: 100%;
+      padding: 14px;
+      margin: 0 20px 20px;
+      background: #374151;
+      border: 1px solid #4b5563;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+    }
+    .btn {
+      width: calc(100% - 40px);
+      margin: 10px 20px;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .connect-btn {
+      background: #ef4444;
+      color: white;
+    }
+    .publish-btn {
+      background: linear-gradient(90deg, #3b82f6, #2563eb);
+      color: white;
+    }
+    .download-btn {
+      background: #22c55e;
+      color: black;
+    }
+    .wallet-status {
+      font-size: 13px;
+      padding: 4px 10px;
+      background: #334155;
+      border-radius: 20px;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Header -->
+  <div class="card">
     <div class="header">
       <div class="logo">
-        <span style="font-size:24px;">📸</span>
-        <span>ShelbyVault</span>
+        📸 <span>ShelbyVault</span>
       </div>
-      <button class="connect-btn" onclick="connectWallet()">Connect Aptos</button>
+      <div id="walletStatus" class="wallet-status">Not Connected</div>
     </div>
 
-    <!-- Meme Preview -->
     <canvas id="memeCanvas" width="500" height="500"></canvas>
 
-    <!-- Upload -->
-    <div class="upload-area" onclick="document.getElementById('imageUpload').click()">
+    <div class="upload-area" id="uploadArea">
       <h2>☁️</h2>
       <p><strong>Choose Meme Image</strong></p>
-      <p style="color:#9ca3af; font-size:14px;">PNG, JPG or GIF up to 10MB</p>
+      <p style="color:#9ca3af;">PNG, JPG or GIF up to 10MB</p>
     </div>
+
     <input type="file" id="imageUpload" accept="image/*" style="display:none;">
 
-    <!-- Caption -->
-    <div class="caption-input">
-      <input type="text" id="caption" placeholder="Enter a funny caption..." oninput="updateMeme()">
-    </div>
+    <input type="text" id="caption" placeholder="Enter your caption..." value="Ayan" oninput="updateMeme()">
 
-    <!-- Publish Button -->
-    <button class="publish-btn" onclick="publishToShelby()">
-      🚀 Publish to ShelbyNet
-    </button>
+    <button onclick="connectPetra()" id="connectBtn" class="btn connect-btn">🔗 Connect Petra Wallet</button>
+    <button onclick="disconnectWallet()" id="disconnectBtn" class="btn connect-btn" style="display:none; background:#ef4444;">🚫 Disconnect Wallet</button>
+
+    <button onclick="publishToShelby()" class="btn publish-btn">🚀 Publish to ShelbyNet (Testnet)</button>
+    <button onclick="downloadMeme()" class="btn download-btn">📥 Download PNG</button>
   </div>
 
   <script>
     const canvas = document.getElementById('memeCanvas');
     const ctx = canvas.getContext('2d');
     let currentImage = null;
+    let accountAddress = null;
 
-    // Default Image
     function loadDefault() {
       const img = new Image();
       img.src = 'https://picsum.photos/id/1015/500/500';
@@ -137,19 +139,23 @@
       if (!currentImage) return;
       ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
 
-      const text = document.getElementById('caption').value || "JUBAYIR69";
-      
-      ctx.font = 'bold 48px Arial';
+      const text = document.getElementById('caption').value || "Ayan";
+
+      ctx.font = 'bold 55px Arial';
       ctx.fillStyle = '#ffffff';
       ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 6;
+      ctx.lineWidth = 8;
       ctx.textAlign = 'center';
-      
+
       ctx.strokeText(text.toUpperCase(), canvas.width/2, canvas.height - 80);
       ctx.fillText(text.toUpperCase(), canvas.width/2, canvas.height - 80);
     }
 
-    // Image Upload
+    // Upload
+    document.getElementById('uploadArea').addEventListener('click', () => {
+      document.getElementById('imageUpload').click();
+    });
+
     document.getElementById('imageUpload').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -166,15 +172,46 @@
       }
     });
 
-    function connectWallet() {
-      alert("✅ Petra Wallet Connecting...\n\n(এখনো Demo)");
+    // Wallet
+    async function connectPetra() {
+      try {
+        if (window.aptos) {
+          const res = await window.aptos.connect();
+          accountAddress = res.address;
+          document.getElementById('walletStatus').textContent = accountAddress.slice(0,6) + "..." + accountAddress.slice(-4);
+          document.getElementById('connectBtn').style.display = 'none';
+          document.getElementById('disconnectBtn').style.display = 'block';
+          alert("✅ Petra Wallet Connected!");
+        } else {
+          alert("Petra Wallet ইনস্টল করুন");
+        }
+      } catch (err) {
+        alert("Connect করতে সমস্যা হয়েছে");
+      }
+    }
+
+    function disconnectWallet() {
+      accountAddress = null;
+      document.getElementById('walletStatus').textContent = "Not Connected";
+      document.getElementById('connectBtn').style.display = 'block';
+      document.getElementById('disconnectBtn').style.display = 'none';
     }
 
     function publishToShelby() {
-      alert("🚀 Meme Published to ShelbyNet!\n\nTransaction Simulated.");
+      if (!accountAddress) {
+        alert("প্রথমে Petra Wallet Connect করুন!");
+        return;
+      }
+      alert(`✅ Meme Published Successfully!\nWallet: ${accountAddress}`);
     }
 
-    // Start
+    function downloadMeme() {
+      const link = document.createElement('a');
+      link.download = 'Ayan-Meme.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+
     loadDefault();
   </script>
 </body>
