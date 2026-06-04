@@ -2,59 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShelbyVault</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style> body { background-color: #0b0f19; color: #ffffff; } </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
+<body class="bg-[#0b0f19] text-white flex items-center justify-center min-h-screen">
 
-    <div class="w-full max-w-md bg-[#111827] border border-gray-800 rounded-2xl shadow-2xl p-6">
-        <div class="flex items-center justify-between mb-6">
-            <span class="text-lg font-bold">ShelbyVault</span>
-            <!-- বাটন: এটি কানেক্ট/ডিসকানেক্ট টগল করবে -->
-            <button id="connectBtn" onclick="toggleWallet()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold transition-all">
+    <div class="w-full max-w-md bg-[#111827] p-6 rounded-2xl shadow-2xl border border-gray-800">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-xl font-bold">ShelbyVault</h1>
+            <!-- কানেক্ট বাটন -->
+            <button id="connectBtn" onclick="connectPetra()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-bold">
                 Connect Wallet
             </button>
         </div>
-
-        <div class="border-2 border-dashed border-gray-600 p-8 rounded-xl text-center mb-6">
-            <p>Choose Meme Image</p>
-        </div>
-
-        <button class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded-lg font-bold">
-            Publish
-        </button>
+        <p class="text-gray-400 text-center">Your secure meme hub</p>
     </div>
 
     <script>
-        async function toggleWallet() {
+        async function connectPetra() {
             const btn = document.getElementById("connectBtn");
 
-            // পেট্রা ওয়ালেট আছে কি না চেক
+            // ১. চেক করা হচ্ছে পেট্রা ওয়ালেট আছে কি না
             if (!window.aptos) {
-                alert("Petra Wallet not found! Please install it.");
+                alert("আপনার ব্রাউজারে Petra Wallet এক্সটেনশনটি পাওয়া যায়নি। দয়া করে সেটি ইনস্টল করুন।");
                 return;
             }
 
             try {
-                // ওয়ালেটের বর্তমান অবস্থা চেক
-                const isConnected = await window.aptos.isConnected();
-
-                if (isConnected) {
-                    // যদি কানেক্ট থাকে, ডিসকানেক্ট করবে
-                    await window.aptos.disconnect();
-                    btn.innerText = "Connect Wallet";
-                } else {
-                    // কানেক্ট না থাকলে কানেক্ট করবে
-                    await window.aptos.connect();
-                    const account = await window.aptos.account();
-                    // ছোট করে অ্যাড্রেস দেখাবে
-                    btn.innerText = account.address.substring(0, 6) + "..." + account.address.substring(account.address.length - 4);
-                }
+                // ২. কানেক্ট করার চেষ্টা
+                await window.aptos.connect();
+                
+                // ৩. একাউন্ট ডিটেইলস নেয়া
+                const account = await window.aptos.account();
+                
+                // ৪. বাটনের টেক্সট পরিবর্তন
+                btn.innerText = account.address.substring(0, 6) + "..." + account.address.substring(account.address.length - 4);
+                btn.style.backgroundColor = "#059669"; // সবুজ রঙ
+                
             } catch (error) {
-                console.error(error);
-                alert("Connection failed! Please unlock your wallet.");
+                console.log(error);
+                alert("কানেক্ট করা যাচ্ছে না। দয়া করে আপনার ওয়ালেটটি আনলক করুন এবং পারমিশন দিন।");
             }
         }
     </script>
