@@ -1,53 +1,46 @@
-// --- Wallet & Transaction Logic ---
+import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
+import { PetraWallet } from "petra-plugin-wallet-adapter";
 
-// ১. ওয়ালেট কানেক্ট ফাংশন
+const wallets = [new PetraWallet()];
+
+export default function RootLayout({ children }) {
+  return (
+    <AptosWalletAdapterProvider plugins={wallets} autoConnect={true}>
+      {children}
+    </AptosWalletAdapterProvider>
+  );
+}
+const { connect, connected, signAndSubmitTransaction, network } = useWallet();
+
+// ওয়ালেট কানেক্ট করার বাটন ফাংশন
 const handleConnect = async () => {
     try {
-        // সরাসরি Petra ওয়ালেটকে কল করা
-        if (window.aptos) {
-            await window.aptos.connect();
-        } else {
-            alert("আপনার ফোনে Petra Wallet অ্যাপটি ওপেন করুন এবং এর ভেতরের ব্রাউজার দিয়ে এই সাইটটি দেখুন।");
-        }
-    } catch (error) {
-        console.error(error);
-        alert("কানেকশন এরর! নিশ্চিত করুন আপনি Petra অ্যাপে আছেন।");
+        await connect("Petra"); // এটিPetra ওয়ালেটের পপ-আপ ওপেন করবে
+    } catch (err) {
+        console.error("Connection error:", err);
     }
 };
 
-// ২. মেম পাবলিশ বা ট্রানজেকশন ফাংশন
+// মেম পাবলিশ বা ট্রানজেকশনের বাটন ফাংশন
 const publishMeme = async () => {
-    // ওয়ালেট কানেক্টেড কি না চেক করা
-    const isConnected = await window.aptos.isConnected();
-    if (!isConnected) {
-        alert("আগে ওয়ালেট কানেক্ট করুন!");
-        return;
-    }
-
-    setUploading(true);
+    if (!connected) return alert("দয়া করে আগে ওয়ালেট কানেক্ট করুন!");
 
     try {
         const payload = {
-            type: "entry_function_payload",
-            function: "0x1::coin::transfer",
-            type_arguments: ["0x1::aptos_coin::AptosCoin"],
-            arguments: [
-                "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a",
-                "100000"
-            ]
+            data: {
+                function: "0x1::coin::transfer",
+                typeArguments: ["0x1::aptos_coin::AptosCoin"],
+                functionArguments: [
+                    "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a",
+                    "100000"
+                ]
+            }
         };
 
-        // ট্রানজেকশন সাবমিট করা
-        const response = await window.aptos.signAndSubmitTransaction(payload);
-        
-        console.log("Success:", response);
-        setFilesUploaded((prev) => prev + 1);
-        alert("ট্রানজেকশন সফল হয়েছে!");
-
-    } catch (error) {
-        console.error(error);
-        alert("ট্রানজেকশন ব্যর্থ হয়েছে। ওয়ালেটের নেটওয়ার্ক 'Testnet' এ সেট করা আছে কি না চেক করুন।");
-    } finally {
-        setUploading(false);
+        const response = await signAndSubmitTransaction(payload);
+        alert("সফল হয়েছে! ট্রানজেকশন হ্যাশ: " + response.hash);
+    } catch (err) {
+        console.error("Publish error:", err);
+        alert("ট্রানজেকশন ব্যর্থ হয়েছে। ওয়ালেটটি Testnet-এ আছে কি না চেক করুন।");
     }
 };
