@@ -2,46 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShelbyVault</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style> body { background-color: #0a0f24; color: #ffffff; } </style>
 </head>
-<body class="bg-[#0b0f19] text-white flex items-center justify-center min-h-screen">
+<body class="flex items-center justify-center min-h-screen">
 
-    <div class="w-full max-w-md bg-[#111827] p-6 rounded-2xl shadow-2xl border border-gray-800">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-xl font-bold">ShelbyVault</h1>
-            <!-- কানেক্ট বাটন -->
-            <button id="connectBtn" onclick="connectPetra()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-bold">
+    <!-- Main Container - আগের ডিজাইন অনুযায়ী -->
+    <div class="w-full max-w-md bg-[#111827] border border-gray-800 rounded-2xl shadow-2xl p-6 m-4">
+        <div class="flex items-center justify-between mb-6">
+            <span class="text-lg font-bold">ShelbyVault</span>
+            <button id="connectBtn" onclick="connectPetra()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold transition-all">
                 Connect Wallet
             </button>
         </div>
-        <p class="text-gray-400 text-center">Your secure meme hub</p>
+
+        <div class="border-2 border-dashed border-gray-600 p-8 rounded-xl text-center mb-6">
+            <p>Choose Meme Image</p>
+            <p class="text-xs text-gray-400">PNG, JPG or GIF up to 10MB</p>
+        </div>
+
+        <input type="text" placeholder="Enter a funny caption.." class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg mb-4 text-white">
+
+        <button class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded-lg font-bold">
+            Publish to ShelbyNet (Testnet)
+        </button>
+        <p class="text-center text-gray-500 text-xs mt-4">Your secure meme hub</p>
     </div>
 
     <script>
         async function connectPetra() {
             const btn = document.getElementById("connectBtn");
 
-            // ১. চেক করা হচ্ছে পেট্রা ওয়ালেট আছে কি না
             if (!window.aptos) {
-                alert("আপনার ব্রাউজারে Petra Wallet এক্সটেনশনটি পাওয়া যায়নি। দয়া করে সেটি ইনস্টল করুন।");
+                alert("Petra Wallet not found! Please ensure you are in Petra/Misses browser.");
                 return;
             }
 
             try {
-                // ২. কানেক্ট করার চেষ্টা
                 await window.aptos.connect();
-                
-                // ৩. একাউন্ট ডিটেইলস নেয়া
                 const account = await window.aptos.account();
-                
-                // ৪. বাটনের টেক্সট পরিবর্তন
                 btn.innerText = account.address.substring(0, 6) + "..." + account.address.substring(account.address.length - 4);
-                btn.style.backgroundColor = "#059669"; // সবুজ রঙ
-                
+                btn.style.backgroundColor = "#059669";
             } catch (error) {
-                console.log(error);
-                alert("কানেক্ট করা যাচ্ছে না। দয়া করে আপনার ওয়ালেটটি আনলক করুন এবং পারমিশন দিন।");
+                alert("Connection failed! Please unlock your wallet.");
             }
         }
     </script>
