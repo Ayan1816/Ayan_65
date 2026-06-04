@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shelby Meme Studio - JUBAYIR69</title>
+  <title>ShelbyVault - Meme Studio</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -13,149 +13,140 @@
       padding: 15px;
       min-height: 100vh;
     }
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-      font-size: 24px;
-      background: linear-gradient(90deg, #ff00ff, #00ffff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .main {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      max-width: 1000px;
+    .container {
+      max-width: 480px;
       margin: auto;
-    }
-    .preview {
-      position: relative;
-      background: #000;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 3px solid #333;
-    }
-    #memeCanvas {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-    .controls {
       background: #111827;
-      padding: 20px;
-      border-radius: 12px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
+    .header {
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       background: #1f2937;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .connect-btn {
+      background: #ef4444;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-weight: bold;
+      border: none;
+    }
+    .upload-area {
+      margin: 20px;
+      border: 2px dashed #4b5563;
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      background: #1f2937;
+    }
+    .upload-area:hover {
+      border-color: #60a5fa;
+    }
+    .caption-input {
+      margin: 0 20px 20px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 14px;
+      background: #374151;
       border: 1px solid #4b5563;
       border-radius: 8px;
       color: white;
       font-size: 16px;
     }
-    .theme-buttons {
-      display: flex;
-      gap: 10px;
-      margin: 15px 0;
-    }
-    .color-btn {
-      flex: 1;
-      padding: 14px;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      color: white;
-      cursor: pointer;
-    }
-    .blue { background: linear-gradient(135deg, #3b82f6, #1e40af); }
-    .sunset { background: linear-gradient(135deg, #f97316, #dc2626); }
-    .green { background: linear-gradient(135deg, #22c55e, #15803d); }
-
-    button.publish {
-      width: 100%;
+    .publish-btn {
+      margin: 10px 20px 25px;
+      width: calc(100% - 40px);
       padding: 16px;
+      background: linear-gradient(90deg, #3b82f6, #2563eb);
+      color: white;
       font-size: 18px;
       font-weight: bold;
-      background: linear-gradient(90deg, #c026d3, #db2777);
       border: none;
-      border-radius: 10px;
-      color: white;
-      margin-top: 15px;
+      border-radius: 12px;
       cursor: pointer;
     }
-    button.download {
+    canvas {
       width: 100%;
-      padding: 12px;
-      background: #22c55e;
-      color: black;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      margin-top: 10px;
+      display: block;
+      background: #000;
     }
   </style>
 </head>
 <body>
-  <h1>🚀 Shelby Meme Studio (JUBAYIR69 Edition)</h1>
-  
-  <div class="main">
-    <div class="preview">
-      <canvas id="memeCanvas" width="600" height="600"></canvas>
-    </div>
-
-    <div class="controls">
-      <input type="text" id="topText" placeholder="Top Text" value="JUBAYIR69" oninput="updateMeme()">
-      <input type="text" id="bottomText" placeholder="Bottom Text" value="AWS IS COLD" oninput="updateMeme()">
-
-      <h3>Theme / Color</h3>
-      <div class="theme-buttons">
-        <button class="color-btn blue" onclick="changeTheme(0)">Blue</button>
-        <button class="color-btn sunset" onclick="changeTheme(1)">Sunset</button>
-        <button class="color-btn green" onclick="changeTheme(2)">Green</button>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <span style="font-size:24px;">📸</span>
+        <span>ShelbyVault</span>
       </div>
-
-      <input type="file" id="imageUpload" accept="image/*">
-
-      <button class="download" onclick="downloadMeme()">📥 Download PNG</button>
-      <button class="publish" onclick="publishToShelby()">🚀 Publish to Shelby (Testnet)</button>
+      <button class="connect-btn" onclick="connectWallet()">Connect Aptos</button>
     </div>
+
+    <!-- Meme Preview -->
+    <canvas id="memeCanvas" width="500" height="500"></canvas>
+
+    <!-- Upload -->
+    <div class="upload-area" onclick="document.getElementById('imageUpload').click()">
+      <h2>☁️</h2>
+      <p><strong>Choose Meme Image</strong></p>
+      <p style="color:#9ca3af; font-size:14px;">PNG, JPG or GIF up to 10MB</p>
+    </div>
+    <input type="file" id="imageUpload" accept="image/*" style="display:none;">
+
+    <!-- Caption -->
+    <div class="caption-input">
+      <input type="text" id="caption" placeholder="Enter a funny caption..." oninput="updateMeme()">
+    </div>
+
+    <!-- Publish Button -->
+    <button class="publish-btn" onclick="publishToShelby()">
+      🚀 Publish to ShelbyNet
+    </button>
   </div>
 
   <script>
     const canvas = document.getElementById('memeCanvas');
     const ctx = canvas.getContext('2d');
     let currentImage = null;
-    let currentTheme = 0;
 
-    const themes = [
-      { textColor: '#ffffff', strokeColor: '#000000' },
-      { textColor: '#fcd34d', strokeColor: '#b91c1c' },
-      { textColor: '#86efac', strokeColor: '#166534' }
-    ];
+    // Default Image
+    function loadDefault() {
+      const img = new Image();
+      img.src = 'https://picsum.photos/id/1015/500/500';
+      img.onload = () => {
+        currentImage = img;
+        updateMeme();
+      };
+    }
 
     function updateMeme() {
       if (!currentImage) return;
-      
       ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
+
+      const text = document.getElementById('caption').value || "JUBAYIR69";
       
-      const topText = document.getElementById('topText').value;
-      const bottomText = document.getElementById('bottomText').value;
-      const theme = themes[currentTheme];
-
-      // Top Text
-      ctx.font = 'bold 55px Arial';
-      ctx.fillStyle = theme.textColor;
-      ctx.strokeStyle = theme.strokeColor;
-      ctx.lineWidth = 8;
+      ctx.font = 'bold 48px Arial';
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 6;
       ctx.textAlign = 'center';
-      ctx.strokeText(topText, canvas.width/2, 90);
-      ctx.fillText(topText, canvas.width/2, 90);
-
-      // Bottom Text
-      ctx.strokeText(bottomText, canvas.width/2, canvas.height - 70);
-      ctx.fillText(bottomText, canvas.width/2, canvas.height - 70);
+      
+      ctx.strokeText(text.toUpperCase(), canvas.width/2, canvas.height - 80);
+      ctx.fillText(text.toUpperCase(), canvas.width/2, canvas.height - 80);
     }
 
     // Image Upload
@@ -163,16 +154,28 @@
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = (ev) => {
           const img = new Image();
           img.onload = () => {
             currentImage = img;
             updateMeme();
           };
-          img.src = event.target.result;
+          img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
       }
     });
 
-    function
+    function connectWallet() {
+      alert("✅ Petra Wallet Connecting...\n\n(এখনো Demo)");
+    }
+
+    function publishToShelby() {
+      alert("🚀 Meme Published to ShelbyNet!\n\nTransaction Simulated.");
+    }
+
+    // Start
+    loadDefault();
+  </script>
+</body>
+</html>
