@@ -10,10 +10,11 @@
 <body class="flex items-center justify-center min-h-screen">
 
     <!-- Main App Container -->
-    <div class="w-full max-w-md p-6 bg-[#111827] border border-gray-800 rounded-2xl shadow-2xl">
+    <div class="w-full max-w-md bg-[#111827] border border-gray-800 rounded-2xl shadow-2xl p-6">
         <div class="flex items-center justify-between mb-6">
             <span class="text-lg font-bold">ShelbyVault</span>
-            <button id="walletBtn" onclick="toggleWallet()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold">
+            <!-- বাটন আইডি এবং ফাংশন নাম আপডেট করা হয়েছে -->
+            <button id="connectBtn" onclick="handleWalletClick()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
                 Connect Petra
             </button>
         </div>
@@ -32,30 +33,31 @@
     </div>
 
     <script>
-        async function toggleWallet() {
-            // কনসোলে চেক করার জন্য লাইনটি যোগ করা হয়েছে
-            console.log("Checking window.aptos:", window.aptos); 
-            
-            const btn = document.getElementById('walletBtn');
-            
-            // চেক করা হচ্ছে ব্রাউজারে অ্যাপটোস ওয়ালেট আছে কি না
-            if (typeof window.aptos !== 'undefined') {
-                try {
-                    // কানেক্ট করার অনুরোধ
-                    const account = await window.aptos.connect();
-                    
-                    // সফল হলে বাটন টেক্সট ও কালার আপডেট
-                    if (account && account.address) {
-                        btn.innerText = account.address.substring(0, 6) + "..." + account.address.substring(account.address.length - 4);
-                        btn.classList.remove('bg-red-500', 'hover:bg-red-600');
-                        btn.classList.add('bg-green-600', 'hover:bg-green-700');
-                    }
-                } catch (err) {
-                    console.error("Connection rejected:", err);
-                    alert("ওয়ালেট কানেকশন বিফল হয়েছে! দয়া করে ওয়ালেটটি আনলক করুন অথবা পারমিশন দিন।");
-                }
+        async function handleWalletClick() {
+            const btn = document.getElementById("connectBtn");
+
+            // ওয়ালেট কানেক্টেড আছে কি না চেক করছে
+            const isConnected = await window.aptos.isConnected();
+
+            if (isConnected) {
+                // ডিসকানেক্ট করার কোড
+                await window.aptos.disconnect();
+                btn.innerText = "Connect Petra";
             } else {
-                alert("পেট্রা ওয়ালেট ডিটেক্ট করা যাচ্ছে না। দয়া করে Misses ব্রাউজারে পেট্রা এক্সটেনশনটি ওপেন রাখুন।");
+                // কানেক্ট করার কোড
+                try {
+                    if (window.aptos) {
+                        await window.aptos.connect();
+                        const account = await window.aptos.account();
+                        // অ্যাড্রেস শর্ট করে দেখাচ্ছে
+                        btn.innerText = account.address.substring(0, 6) + "...";
+                    } else {
+                        alert("Petra Wallet not found!");
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert("ওয়ালেট কানেকশন বিফল হয়েছে! অনুগ্রহ করে ওয়ালেটটি আনলক করুন অথবা পারমিশন দিন।");
+                }
             }
         }
     </script>
