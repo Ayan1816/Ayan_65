@@ -7,7 +7,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background-color: #0d0e12; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .card { max-width: 500px; margin: auto; background: #161820; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        .card { max-width: 500px; width: 100%; background: #161820; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
         .header { padding: 15px 20px; background: linear-gradient(90deg, #1e3a8a, #0d9488); border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
         canvas { width: 100%; display: block; background: #000; border-radius: 8px; margin-bottom: 20px; }
         .controls { display: flex; flex-direction: column; gap: 12px; }
@@ -16,13 +16,13 @@
         .theme-btn { flex: 1; padding: 14px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .theme-btn:hover { opacity: 0.9; }
         .btn { width: 100%; padding: 16px; margin-top: 8px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
-        .connect { background: #2563eb; color: white; }
-        .connect:hover { background: #1d4ed8; }
+        .connect { background: #3b82f6; color: white; }
+        .connect:hover { background: #2563eb; }
         .disconnect { background: #dc2626; color: white; }
         .publish { background: #2563eb; color: white; }
         .download { background: #4b5563; color: white; }
         .status-container { display: flex; flex-direction: column; align-items: flex-end; font-size: 14px; }
-        .network-tag { background: #1e293b; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-top: 4px; color: #38bdf8; }
+        .network-tag { background: #1e293b; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-top: 4px; color: #38bdf8; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -34,7 +34,7 @@
             <div style="font-size: 12px; color: #9ca3af;">Meme Studio</div>
         </div>
         <div class="status-container">
-            <button onclick="toggleWallet()" id="walletBtn" class="theme-btn connect" style="padding: 8px 16px; flex: none; font-size: 14px;">Connect Wallet</button>
+            <button onclick="handleWalletAction()" id="walletBtn" class="theme-btn connect" style="padding: 8px 16px; flex: none; font-size: 14px;">Connect Wallet</button>
             <span id="networkStatus" class="network-tag">Network: Offline</span>
         </div>
     </div>
@@ -125,26 +125,39 @@ document.getElementById('imageUpload').onchange = (e) => {
     }
 };
 
-// ==================== AIP-62 স্ট্যান্ডার্ড ওয়ালেট ইঞ্জিন ====================
+// ==================== ভিডিও স্ট্যান্ডার্ড অনুযায়ী ফাইনাল ওয়ালেট লজিক ====================
 
-// অ্যাপ্টস ওয়ালেট স্ট্যান্ডার্ড প্রোভাইডার চেক
-function getWalletProvider() {
-    // স্ট্যান্ডার্ড AIP-62 অবজেক্ট চেক
-    if (window.aptos && window.aptos.features && window.aptos.features['aptos:connect']) {
-        return window.aptos;
-    }
-    // ব্যাকআপ গ্লোবাল চেক
+// অ্যাপ্টস ওয়ালেট স্ট্যান্ডার্ড (AIP-62) খুঁজে বের করার সবচেয়ে আধুনিক গাইডলাইন
+function getStandardPetraWallet() {
+    // ১. গ্লোবাল রেজিস্ট্রি থেকে অন-ডিমান্ড খোঁজা
     if (window.__aptosWallets && window.__aptosWallets.length > 0) {
-        return window.__aptosWallets[0];
+        const standardPetra = window.__aptosWallets.find(w => w.name.toLowerCase().includes('petra'));
+        if (standardPetra) return standardPetra;
     }
-    return window.petra || window.aptos || null;
+    
+    // ২. যদি ব্রাউজার ওল্ড বা ইন-অ্যাপ হয় তবে এটি ব্যাকআপ প্রোভাইডার
+    if (window.aptos && window.aptos.features) return window.aptos;
+    if (window.petra) return window.petra;
+    
+    return null;
 }
 
-async function toggleWallet() {
+async function handleWalletAction() {
     const walletBtn = document.getElementById('walletBtn');
     
-    // যদি অলরেডি কানেক্টেড থাকে, তবে ডিসকানেক্ট হবে
+    // যদি অলরেডি কানেক্টেড থাকে, তবে ভিডিওর মতো ডিসকানেক্ট করে দেবে
     if (accountAddress) {
+        try {
+            const wallet = getStandardPetraWallet();
+            if (wallet && wallet.disconnect) {
+                await wallet.disconnect();
+            } else if (wallet && wallet.features && wallet.features['aptos:disconnect']) {
+                await wallet.features['aptos:disconnect'].disconnect();
+            }
+        } catch (e) {
+            console.log("Disconnect error:", e);
+        }
+        
         accountAddress = null;
         walletBtn.innerText = "Connect Wallet";
         walletBtn.className = "theme-btn connect";
@@ -153,80 +166,89 @@ async function toggleWallet() {
         return;
     }
 
-    // কানেক্ট করার প্রসেস
+    // কানেক্ট করার ফ্রেশ সেশন শুরু
     try {
-        const wallet = getWalletProvider();
+        const wallet = getStandardPetraWallet();
         
         if (!wallet) {
-            alert("Petra Wallet পাওয়া যায়নি! দয়া করে Mises ব্রাউজারে Petra Extension ইনস্টল ও আনলক করুন অথবা Petra App-এর নিজস্ব ব্রাউজার ব্যবহার করুন।");
+            alert("Petra Wallet ডিটেক্ট করা যায়নি!\n\n💡 দয়া করে Mises ব্রাউজারের Extension অপশন থেকে Petra ওয়ালেটটি পাসওয়ার্ড দিয়ে আনলক করে পেজটি রিফ্রেশ দিন।");
             return;
         }
 
         walletBtn.innerText = "Connecting...";
 
-        let response;
-        // লেটেস্ট স্ট্যান্ডার্ড ফিচার দিয়ে কানেক্ট (এতেই ভিডিওর মতো পপ-আপ আসবে)
+        let connectionResponse;
+        
+        // ভিডিওর কোড স্টাইল: স্ট্যান্ডার্ড ফিচারের মাধ্যমে কানেক্ট করা
         if (wallet.features && wallet.features['aptos:connect']) {
-            response = await wallet.features['aptos:connect'].connect();
+            connectionResponse = await wallet.features['aptos:connect'].connect();
         } else {
-            response = await wallet.connect();
+            // জেনারেল মেথড ফলব্যাক
+            connectionResponse = await wallet.connect();
         }
 
-        // অ্যাড্রেস ফিল্টার করা
-        const account = response.account || response;
+        // সফলভাবে ডেটা রিট্রিভ করা
+        const account = connectionResponse.account || connectionResponse;
         accountAddress = account.address || account;
 
         if (accountAddress) {
-            // ভিডিওর মতো অ্যাড্রেস শর্ট করে বাটনে দেখানো (যেমন: 0xabcd...1234)
-            const shortAddress = `${accountAddress.slice(0, 6)}...${accountAddress.slice(-4)}`;
-            walletBtn.innerText = shortAddress;
+            // ভিডিওর মতো হুবহু অ্যাড্রেস ফরম্যাট করা (যেমন: 0x51f1...2c5e)
+            const formattedAddr = `${accountAddress.slice(0, 6)}...${accountAddress.slice(-4)}`;
+            walletBtn.innerText = formattedAddr;
             walletBtn.className = "theme-btn disconnect";
             
-            // নেটওয়ার্ক স্ট্যাটাস আপডেট
+            // নেটওয়ার্ক টেস্টনেট আপডেট
             document.getElementById('networkStatus').innerText = "Network: testnet";
             document.getElementById('networkStatus').style.color = "#22c55e";
         }
     } catch (err) {
-        console.error("Wallet Error:", err);
+        console.error("Wallet Connection Error:", err);
         walletBtn.innerText = "Connect Wallet";
         walletBtn.className = "theme-btn connect";
-        alert("কানেকশন ক্যানসেল বা রিজেক্ট করা হয়েছে।");
+        alert("কানেকশন ক্যানসেল বা রিজেক্ট করা হয়েছে। নিশ্চিত করুন আপনার Petra Wallet-টি এক্সটেনশনে আনলকড আছে।");
     }
 }
 
 async function publishToShelby() {
     if (!accountAddress) {
-        alert("Please connect wallet first!");
+        alert("Please connect your Petra Wallet first!");
         return;
     }
     
     try {
-        const wallet = getWalletProvider();
+        const wallet = getStandardPetraWallet();
         if (!wallet) return;
 
-        // ভিডিওর মতো টেস্টনেট ট্রানজেকশন রিকোয়েস্ট পাঠানো
-        alert("Transaction Initiated! Petra ওয়ালেটে ট্রানজেকশন Approve করার পপ-আপ আসছে...");
+        // ভিডিওর মতো টেস্টনেট মেম ট্রানজেকশন ইনিশিয়েট করা
+        alert("Uploading to Aptos Testnet... দয়া করে ওয়ালেট পপ-আপে Approve করুন।");
         
-        // Shelby বা Aptos টেস্টনেট ট্রানজেকশনের ডামি পে-লোড (আপনার কন্ট্রাক্ট অনুযায়ী পরিবর্তন করতে পারবেন)
-        const payload = {
-            arguments: [accountAddress, "100"],
-            function: "0x1::coin::transfer",
-            type_arguments: ["0x1::aptos_coin::AptosCoin"]
+        // ভিডিওর সোর্স কোড অনুযায়ী স্ট্যান্ডার্ড পে-লোড স্ট্রাকচার
+        const transactionPayload = {
+            data: {
+                function: "0x1::coin::transfer",
+                typeArguments: ["0x1::aptos_coin::AptosCoin"],
+                functionArguments: [accountAddress, "1000"] // টেস্ট ট্রানজেকশন
+            }
         };
 
         let txResult;
+        
+        // AIP-62 স্ট্যান্ডার্ড অনুযায়ী সাইন এবং সাবমিট করা
         if (wallet.features && wallet.features['aptos:signAndSubmitTransaction']) {
-            txResult = await wallet.features['aptos:signAndSubmitTransaction'].signAndSubmitTransaction({ payload });
+            txResult = await wallet.features['aptos:signAndSubmitTransaction'].signAndSubmitTransaction({ 
+                payload: transactionPayload.data 
+            });
         } else {
-            txResult = await wallet.signAndSubmitTransaction(payload);
+            txResult = await wallet.signAndSubmitTransaction(transactionPayload);
         }
 
-        if(txResult) {
-            alert("Transaction Successful!");
+        if (txResult) {
+            const hash = txResult.hash || txResult;
+            alert(`Succeed! Transaction confirmed on Aptos Testnet.\nHash: ${hash}`);
         }
     } catch (error) {
-        console.error("Publish Error:", error);
-        alert("ট্রানজেকশন ক্যানসেল বা ব্যর্থ হয়েছে।");
+        console.error("Transaction Error:", error);
+        alert("Testnet transaction failed or was cancelled!");
     }
 }
 
