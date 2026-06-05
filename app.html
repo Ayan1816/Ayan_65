@@ -125,39 +125,21 @@ document.getElementById('imageUpload').onchange = (e) => {
     }
 };
 
-// ==================== ভিডিও স্ট্যান্ডার্ড অনুযায়ী ফাইনাল ওয়ালেট লজিক ====================
+// ==================== ফিক্সড ও ক্লিন ওয়ালেট লজিক ====================
 
-// অ্যাপ্টস ওয়ালেট স্ট্যান্ডার্ড (AIP-62) খুঁজে বের করার সবচেয়ে আধুনিক গাইডলাইন
 function getStandardPetraWallet() {
-    // ১. গ্লোবাল রেজিস্ট্রি থেকে অন-ডিমান্ড খোঁজা
-    if (window.__aptosWallets && window.__aptosWallets.length > 0) {
-        const standardPetra = window.__aptosWallets.find(w => w.name.toLowerCase().includes('petra'));
-        if (standardPetra) return standardPetra;
-    }
-    
-    // ২. যদি ব্রাউজার ওল্ড বা ইন-অ্যাপ হয় তবে এটি ব্যাকআপ প্রোভাইডার
-    if (window.aptos && window.aptos.features) return window.aptos;
+    if (window.aptos) return window.aptos;
     if (window.petra) return window.petra;
-    
+    if (window.__aptosWallets && window.__aptosWallets.length > 0) {
+        return window.__aptosWallets[0];
+    }
     return null;
 }
 
 async function handleWalletAction() {
     const walletBtn = document.getElementById('walletBtn');
     
-    // যদি অলরেডি কানেক্টেড থাকে, তবে ভিডিওর মতো ডিসকানেক্ট করে দেবে
     if (accountAddress) {
-        try {
-            const wallet = getStandardPetraWallet();
-            if (wallet && wallet.disconnect) {
-                await wallet.disconnect();
-            } else if (wallet && wallet.features && wallet.features['aptos:disconnect']) {
-                await wallet.features['aptos:disconnect'].disconnect();
-            }
-        } catch (e) {
-            console.log("Disconnect error:", e);
-        }
-        
         accountAddress = null;
         walletBtn.innerText = "Connect Wallet";
         walletBtn.className = "theme-btn connect";
@@ -166,38 +148,27 @@ async function handleWalletAction() {
         return;
     }
 
-    // কানেক্ট করার ফ্রেশ সেশন শুরু
     try {
         const wallet = getStandardPetraWallet();
         
         if (!wallet) {
-            alert("Petra Wallet ডিটেক্ট করা যায়নি!\n\n💡 দয়া করে Mises ব্রাউজারের Extension অপশন থেকে Petra ওয়ালেটটি পাসওয়ার্ড দিয়ে আনলক করে পেজটি রিফ্রেশ দিন।");
+            alert("Petra Wallet পাওয়া যায়নি! অনুগ্রহ করে আপনার Mises ব্রাউজারে Petra Extension ইনস্টল রাখুন এবং পেজটি একবার রিফ্রেশ দিন।");
             return;
         }
 
         walletBtn.innerText = "Connecting...";
 
-        let connectionResponse;
+        // সরাসরি মায়সেস ব্রাউজারের এক্সটেনশনকে ট্রিগার করার জন্য পিউর মেথড
+        const response = await wallet.connect();
         
-        // ভিডিওর কোড স্টাইল: স্ট্যান্ডার্ড ফিচারের মাধ্যমে কানেক্ট করা
-        if (wallet.features && wallet.features['aptos:connect']) {
-            connectionResponse = await wallet.features['aptos:connect'].connect();
-        } else {
-            // জেনারেল মেথড ফলব্যাক
-            connectionResponse = await wallet.connect();
-        }
-
-        // সফলভাবে ডেটা রিট্রিভ করা
-        const account = connectionResponse.account || connectionResponse;
+        const account = response.account || response;
         accountAddress = account.address || account;
 
         if (accountAddress) {
-            // ভিডিওর মতো হুবহু অ্যাড্রেস ফরম্যাট করা (যেমন: 0x51f1...2c5e)
             const formattedAddr = `${accountAddress.slice(0, 6)}...${accountAddress.slice(-4)}`;
             walletBtn.innerText = formattedAddr;
             walletBtn.className = "theme-btn disconnect";
             
-            // নেটওয়ার্ক টেস্টনেট আপডেট
             document.getElementById('networkStatus').innerText = "Network: testnet";
             document.getElementById('networkStatus').style.color = "#22c55e";
         }
@@ -205,7 +176,7 @@ async function handleWalletAction() {
         console.error("Wallet Connection Error:", err);
         walletBtn.innerText = "Connect Wallet";
         walletBtn.className = "theme-btn connect";
-        alert("কানেকশন ক্যানসেল বা রিজেক্ট করা হয়েছে। নিশ্চিত করুন আপনার Petra Wallet-টি এক্সটেনশনে আনলকড আছে।");
+        alert("কানেকশন রিজেক্ট হয়েছে বা ওয়ালেট লকড আছে। এক্সটেনশনটি ওপেন করে পাসওয়ার্ড দিয়ে আনলক রাখুন।");
     }
 }
 
@@ -219,32 +190,19 @@ async function publishToShelby() {
         const wallet = getStandardPetraWallet();
         if (!wallet) return;
 
-        // ভিডিওর মতো টেস্টনেট মেম ট্রানজেকশন ইনিশিয়েট করা
-        alert("Uploading to Aptos Testnet... দয়া করে ওয়ালেট পপ-আপে Approve করুন।");
+        alert("Uploading to Aptos Testnet... দয়া করে ওয়ালেট উইন্ডোতে Approve করুন।");
         
-        // ভিডিওর সোর্স কোড অনুযায়ী স্ট্যান্ডার্ড পে-লোড স্ট্রাকচার
         const transactionPayload = {
-            data: {
-                function: "0x1::coin::transfer",
-                typeArguments: ["0x1::aptos_coin::AptosCoin"],
-                functionArguments: [accountAddress, "1000"] // টেস্ট ট্রানজেকশন
-            }
+            function: "0x1::coin::transfer",
+            type_arguments: ["0x1::aptos_coin::AptosCoin"],
+            arguments: [accountAddress, "1000"]
         };
 
-        let txResult;
-        
-        // AIP-62 স্ট্যান্ডার্ড অনুযায়ী সাইন এবং সাবমিট করা
-        if (wallet.features && wallet.features['aptos:signAndSubmitTransaction']) {
-            txResult = await wallet.features['aptos:signAndSubmitTransaction'].signAndSubmitTransaction({ 
-                payload: transactionPayload.data 
-            });
-        } else {
-            txResult = await wallet.signAndSubmitTransaction(transactionPayload);
-        }
+        let txResult = await wallet.signAndSubmitTransaction(transactionPayload);
 
         if (txResult) {
             const hash = txResult.hash || txResult;
-            alert(`Succeed! Transaction confirmed on Aptos Testnet.\nHash: ${hash}`);
+            alert(`Succeed! Transaction confirmed.\nHash: ${hash}`);
         }
     } catch (error) {
         console.error("Transaction Error:", error);
