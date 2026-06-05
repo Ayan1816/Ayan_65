@@ -8,55 +8,56 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background-color: #0d0e12; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
         .card { max-width: 500px; margin: auto; background: #161820; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-        .header { padding: 15px 20px; background: linear-gradient(90deg, #f02576, #b01556); border-radius: 8px; margin-bottom: 20px; text-align: center; position: relative; }
+        .header { padding: 15px 20px; background: linear-gradient(90deg, #1e3a8a, #0d9488); border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
         canvas { width: 100%; display: block; background: #000; border-radius: 8px; margin-bottom: 20px; }
         .controls { display: flex; flex-direction: column; gap: 12px; }
-        input[type="text"], input[type="range"] { width: 100%; padding: 12px; background: #22c55e0a; border: 1px solid #374151; border-radius: 6px; color: white; font-size: 16px; }
+        input[type="text"], input[type="range"] { width: 100%; padding: 12px; background: #1f2937; border: 1px solid #374151; border-radius: 6px; color: white; font-size: 16px; }
         .theme-buttons { display: flex; gap: 8px; margin: 5px 0; }
         .theme-btn { flex: 1; padding: 14px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .theme-btn:hover { opacity: 0.9; }
-        .btn { width: 100%; padding: 16px; margin-top: 8px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .connect { background: #22c55e; color: black; }
-        .disconnect { background: #ef4444; color: white; }
-        .publish { background: linear-gradient(90deg, #fa1070, #960943); color: white; }
-        .download { background: #eab308; color: black; }
-        .status { font-weight: bold; color: #22c55e; }
+        .btn { width: 100%; padding: 16px; margin-top: 8px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
+        .connect { background: #2563eb; color: white; }
+        .connect:hover { background: #1d4ed8; }
+        .disconnect { background: #dc2626; color: white; }
+        .publish { background: #2563eb; color: white; }
+        .download { background: #4b5563; color: white; }
+        .status-container { display: flex; flex-direction: column; align-items: flex-end; font-size: 14px; }
+        .network-tag { background: #1e293b; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-top: 4px; color: #38bdf8; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <div class="header">
-        <div style="font-size: 22px; font-weight: bold;">ShelbyVault - Ayan</div>
-        <div id="walletStatus" class="status">Not Connected</div>
-        <small id="walletAddress" style="color: #ccc; display: block; margin-top: 5px; word-break: break-all;"></small>
+        <div>
+            <div style="font-size: 20px; font-weight: bold;">SHELBY</div>
+            <div style="font-size: 12px; color: #9ca3af;">Meme Studio</div>
+        </div>
+        <div class="status-container">
+            <button onclick="toggleWallet()" id="walletBtn" class="theme-btn connect" style="padding: 8px 16px; flex: none; font-size: 14px;">Connect Wallet</button>
+            <span id="networkStatus" class="network-tag">Network: Offline</span>
+        </div>
     </div>
 
     <canvas id="memeCanvas" width="500" height="500"></canvas>
 
     <div class="controls">
-        <input type="text" id="topText" value="AYAN" oninput="updateMeme()">
-        <input type="text" id="bottomText" value="BUILD ON APTOS" oninput="updateMeme()">
+        <input type="text" id="topText" value="SHELBY IS HOT" oninput="updateMeme()">
+        <input type="text" id="bottomText" value="AWS IS COLD" oninput="updateMeme()">
 
         <div class="theme-buttons">
-            <button class="theme-btn" style="background: linear-gradient(90deg, #3b82f6, #1d4ed8);" onclick="changeTheme(0)">Blue</button>
-            <button class="theme-btn" style="background: linear-gradient(90deg, #f97316, #c2410c);" onclick="changeTheme(1)">Sunset</button>
-            <button class="theme-btn" style="background: linear-gradient(90deg, #22c55e, #15803d);" onclick="changeTheme(2)">Green</button>
+            <button class="theme-btn" style="background: #3b82f6;" onclick="changeTheme(0)">Blue</button>
+            <button class="theme-btn" style="background: #ef4444;" onclick="changeTheme(1)">Sunset</button>
+            <button class="theme-btn" style="background: #22c55e;" onclick="changeTheme(2)">Green</button>
         </div>
 
-        <label class="size">Text Size: <span id="sizeVal">55</span></label>
-        <input type="range" id="textSize" min="30" max="80" value="55" oninput="updateMeme(); document.getElementById('sizeVal').innerText = this.value;">
-
-        <div id="uploadArea" style="border: 2px dashed #4b5563; border-radius: 8px; padding: 15px; text-align: center; margin: 10px 0; cursor: pointer;">
-            <p style="color: #9ca3af; margin: 0;">📸 Choose Meme Image <br><small>PNG, JPG or GIF</small></p>
+        <div id="uploadArea" style="border: 2px dashed #4b5563; border-radius: 8px; padding: 15px; text-align: center; margin: 5px 0; cursor: pointer; background: #1f2937;">
+            <p style="color: #9ca3af; margin: 0;">Upload Bg</p>
         </div>
         <input type="file" id="imageUpload" accept="image/*" style="display: none;">
 
-        <button onclick="connectWallet()" id="connectBtn" class="btn connect">🔌 Connect Petra Wallet</button>
-        <button onclick="disconnectWallet()" id="disconnectBtn" class="btn disconnect" style="display: none;">❌ Disconnect Wallet</button>
-
-        <button onclick="publishToShelby()" class="btn publish">🚀 Publish to ShelbyNet (Testnet)</button>
-        <button onclick="downloadMeme()" class="btn download">📥 Download PNG</button>
+        <button onclick="downloadMeme()" class="btn download">Download PNG</button>
+        <button onclick="publishToShelby()" class="btn publish">Publish to Shelby (Testnet Tx)</button>
     </div>
 </div>
 
@@ -66,7 +67,6 @@ const ctx = canvas.getContext('2d');
 let currentImage = null;
 let currentTheme = 0;
 let accountAddress = null;
-let selectedWalletProvider = null; // নতুন স্ট্যান্ডার্ড ওয়ালেট অবজেক্ট রাখার জন্য
 
 const themes = [
     { stroke: '#000', fill: '#fff' },
@@ -87,21 +87,20 @@ function updateMeme() {
     if (!currentImage) return;
     ctx.drawImage(currentImage, 0, 0, 500, 500);
 
-    const top = document.getElementById('topText').value || 'AYAN';
-    const bottom = document.getElementById('bottomText').value || 'BUILD ON APTOS';
-    const size = parseInt(document.getElementById('textSize').value);
+    const top = document.getElementById('topText').value || 'SHELBY IS HOT';
+    const bottom = document.getElementById('bottomText').value || 'AWS IS COLD';
     const t = themes[currentTheme];
 
-    ctx.font = `bold ${size}px Arial`;
+    ctx.font = `bold 45px Arial`;
     ctx.textAlign = 'center';
     ctx.strokeStyle = t.stroke;
     ctx.fillStyle = t.fill;
-    ctx.lineWidth = size / 8;
+    ctx.lineWidth = 6;
 
-    ctx.strokeText(top.toUpperCase(), 250, 100);
-    ctx.fillText(top.toUpperCase(), 250, 100);
-    ctx.strokeText(bottom.toUpperCase(), 250, 450);
-    ctx.fillText(bottom.toUpperCase(), 250, 450);
+    ctx.strokeText(top.toUpperCase(), 250, 80);
+    ctx.fillText(top.toUpperCase(), 250, 80);
+    ctx.strokeText(bottom.toUpperCase(), 250, 440);
+    ctx.fillText(bottom.toUpperCase(), 250, 440);
 }
 
 function changeTheme(i) {
@@ -126,94 +125,108 @@ document.getElementById('imageUpload').onchange = (e) => {
     }
 };
 
-// ==================== AIP-62 স্ট্যান্ডার্ড ওয়ালেট লজিক (১০০% ফিক্সড) ====================
+// ==================== AIP-62 স্ট্যান্ডার্ড ওয়ালেট ইঞ্জিন ====================
 
-// নতুন নিয়ম অনুযায়ী ব্রাউজারে থাকা স্ট্যান্ডার্ড ওয়ালেটগুলো খুঁজে বের করার ফাংশন
-function getAptosStandardWallet() {
-    // ১. যদি লেটেস্ট window.aptos স্ট্যান্ডার্ড অবজেক্ট থাকে
-    if (window.aptos && typeof window.aptos.features === 'object') {
+// অ্যাপ্টস ওয়ালেট স্ট্যান্ডার্ড প্রোভাইডার চেক
+function getWalletProvider() {
+    // স্ট্যান্ডার্ড AIP-62 অবজেক্ট চেক
+    if (window.aptos && window.aptos.features && window.aptos.features['aptos:connect']) {
         return window.aptos;
     }
-    
-    // ২. যদি স্ট্যান্ডার্ড ওয়ালেট লিস্টে Petra থাকে
+    // ব্যাকআপ গ্লোবাল চেক
     if (window.__aptosWallets && window.__aptosWallets.length > 0) {
-        const petra = window.__aptosWallets.find(w => w.name.toLowerCase().includes('petra'));
-        if (petra) return petra;
+        return window.__aptosWallets[0];
     }
-    
-    // ৩. ব্যাকআপ হিসেবে ওল্ড সাপোর্ট (যদি ব্রাউজার আপডেট না হয়)
-    if (window.petra) return window.petra;
-    if (window.aptos) return window.aptos;
-    
-    return null;
+    return window.petra || window.aptos || null;
 }
 
-async function connectWallet() {
+async function toggleWallet() {
+    const walletBtn = document.getElementById('walletBtn');
+    
+    // যদি অলরেডি কানেক্টেড থাকে, তবে ডিসকানেক্ট হবে
+    if (accountAddress) {
+        accountAddress = null;
+        walletBtn.innerText = "Connect Wallet";
+        walletBtn.className = "theme-btn connect";
+        document.getElementById('networkStatus').innerText = "Network: Offline";
+        document.getElementById('networkStatus').style.color = "#38bdf8";
+        return;
+    }
+
+    // কানেক্ট করার প্রসেস
     try {
-        const wallet = getAptosStandardWallet();
+        const wallet = getWalletProvider();
         
-        if (wallet) {
-            document.getElementById('walletStatus').innerText = "Connecting...";
-            
-            let account;
-            
-            // নতুন Wallet Standard (AIP-62) অনুযায়ী কানেক্ট করার চেষ্টা
-            if (wallet.features && wallet.features['aptos:connect']) {
-                const connectFeature = wallet.features['aptos:connect'];
-                const result = await connectFeature.connect();
-                account = result.account;
-            } else {
-                // ব্রাউজারের সাধারণ সেশন কানেক্ট ট্রাই
-                account = await wallet.connect();
-            }
-            
-            // অ্যাকাউন্ট থেকে অ্যাড্রেস নেওয়া
-            accountAddress = account ? (account.address || account) : null;
-            selectedWalletProvider = wallet;
-            
-            if (accountAddress && typeof accountAddress === 'string') {
-                document.getElementById('walletStatus').innerText = "Connected";
-                document.getElementById('walletAddress').innerText = `Address: ${accountAddress}`;
-                document.getElementById('connectBtn').style.display = 'none';
-                document.getElementById('disconnectBtn').style.display = 'block';
-                
-                alert("Petra Wallet Connected Successfully via Standard API!");
-            } else {
-                throw new Error("অ্যাড্রেস পাওয়া যায়নি। ওয়ালেট আনলক করে আবার চেষ্টা করুন।");
-            }
+        if (!wallet) {
+            alert("Petra Wallet পাওয়া যায়নি! দয়া করে Mises ব্রাউজারে Petra Extension ইনস্টল ও আনলক করুন অথবা Petra App-এর নিজস্ব ব্রাউজার ব্যবহার করুন।");
+            return;
+        }
+
+        walletBtn.innerText = "Connecting...";
+
+        let response;
+        // লেটেস্ট স্ট্যান্ডার্ড ফিচার দিয়ে কানেক্ট (এতেই ভিডিওর মতো পপ-আপ আসবে)
+        if (wallet.features && wallet.features['aptos:connect']) {
+            response = await wallet.features['aptos:connect'].connect();
         } else {
-            document.getElementById('walletStatus').innerText = "Not Connected";
-            alert("Petra Wallet ডিটেক্ট করা যায়নি!\n\n💡 সমাধান:\n১. নিশ্চিত করুন আপনি Mises বা Kiwi ব্রাউজার ব্যবহার করছেন।\n২. ব্রাউজারের Extension মেনু থেকে Petra Wallet-টি পাসওয়ার্ড দিয়ে আগে থেকেই Unlock করে রাখুন, তারপর পেজটি রিফ্রেশ দিন।");
+            response = await wallet.connect();
+        }
+
+        // অ্যাড্রেস ফিল্টার করা
+        const account = response.account || response;
+        accountAddress = account.address || account;
+
+        if (accountAddress) {
+            // ভিডিওর মতো অ্যাড্রেস শর্ট করে বাটনে দেখানো (যেমন: 0xabcd...1234)
+            const shortAddress = `${accountAddress.slice(0, 6)}...${accountAddress.slice(-4)}`;
+            walletBtn.innerText = shortAddress;
+            walletBtn.className = "theme-btn disconnect";
+            
+            // নেটওয়ার্ক স্ট্যাটাস আপডেট
+            document.getElementById('networkStatus').innerText = "Network: testnet";
+            document.getElementById('networkStatus').style.color = "#22c55e";
         }
     } catch (err) {
-        console.error("Wallet Connection Error:", err);
-        document.getElementById('walletStatus').innerText = "Not Connected";
-        alert("কানেকশন ব্যর্থ হয়েছে!\nভুল: " + (err.message || "Unknown Error"));
+        console.error("Wallet Error:", err);
+        walletBtn.innerText = "Connect Wallet";
+        walletBtn.className = "theme-btn connect";
+        alert("কানেকশন ক্যানসেল বা রিজেক্ট করা হয়েছে।");
     }
-}
-
-function disconnectWallet() {
-    accountAddress = null;
-    selectedWalletProvider = null;
-    document.getElementById('walletStatus').innerText = "Not Connected";
-    document.getElementById('walletAddress').innerText = "";
-    document.getElementById('connectBtn').style.display = 'block';
-    document.getElementById('disconnectBtn').style.display = 'none';
-    alert("Wallet Disconnected!");
 }
 
 async function publishToShelby() {
     if (!accountAddress) {
-        alert("প্রথমে Connect Petra Wallet বাটনে ক্লিক করে ওয়ালেট কানেক্ট করুন!");
+        alert("Please connect wallet first!");
         return;
     }
     
     try {
-        alert(`Transaction Submitted!\nWallet: ${accountAddress}\nএখন Petra Wallet-এ Approve করার নতুন স্ট্যান্ডার্ড পপ-আপ আসবে।`);
-        // এখানে ফিউচারে ট্রানজেকশন সাইন করার স্ট্যান্ডার্ড ফিচার যুক্ত করতে পারবেন।
+        const wallet = getWalletProvider();
+        if (!wallet) return;
+
+        // ভিডিওর মতো টেস্টনেট ট্রানজেকশন রিকোয়েস্ট পাঠানো
+        alert("Transaction Initiated! Petra ওয়ালেটে ট্রানজেকশন Approve করার পপ-আপ আসছে...");
+        
+        // Shelby বা Aptos টেস্টনেট ট্রানজেকশনের ডামি পে-লোড (আপনার কন্ট্রাক্ট অনুযায়ী পরিবর্তন করতে পারবেন)
+        const payload = {
+            arguments: [accountAddress, "100"],
+            function: "0x1::coin::transfer",
+            type_arguments: ["0x1::aptos_coin::AptosCoin"]
+        };
+
+        let txResult;
+        if (wallet.features && wallet.features['aptos:signAndSubmitTransaction']) {
+            txResult = await wallet.features['aptos:signAndSubmitTransaction'].signAndSubmitTransaction({ payload });
+        } else {
+            txResult = await wallet.signAndSubmitTransaction(payload);
+        }
+
+        if(txResult) {
+            alert("Transaction Successful!");
+        }
     } catch (error) {
         console.error("Publish Error:", error);
-        alert("পাবলিশ করতে ব্যর্থ হয়েছে।");
+        alert("ট্রানজেকশন ক্যানসেল বা ব্যর্থ হয়েছে।");
     }
 }
 
