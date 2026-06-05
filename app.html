@@ -2,7 +2,7 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ShelbyVault - Ayan Edition</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -62,7 +62,8 @@
     .connect { background: #22c55e; color: black; }
     .publish { background: linear-gradient(90deg, #a855f7, #7e22ce); color: white; }
     .download { background: #eab308; color: black; }
-    .status { padding: 8px 16px; background: #334155; border-radius: 30px; font-size: 14px; }
+    .status { padding: 10px 16px; background: #334155; border-radius: 30px; font-size: 14px; text-align: center; }
+    #manualAddress { display: none; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -87,7 +88,7 @@
       <label>Text Size: <span id="sizeValue">55</span></label>
       <input type="range" id="textSize" min="30" max="80" value="55" oninput="updateMeme(); document.getElementById('sizeValue').textContent=this.value">
 
-      <div id="uploadArea" style="border:2px dashed #4b5563;border-radius:12px;padding:30px;text-align:center;margin:15px 0;cursor:pointer;">
+      <div id="uploadArea" style="border:2px dashed #4b5563;border-radius:12px;padding:25px;text-align:center;margin:15px 0;cursor:pointer;">
         <h3>☁️ Choose Meme Image</h3>
         <p style="color:#9ca3af;">PNG, JPG or GIF</p>
       </div>
@@ -98,6 +99,10 @@
 
       <button onclick="publishToShelby()" class="btn publish">🚀 Publish to ShelbyNet (Testnet)</button>
       <button onclick="downloadMeme()" class="btn download">📥 Download PNG</button>
+
+      <!-- Test Mode -->
+      <button onclick="toggleManual()" class="btn" style="background:#64748b;margin-top:10px;">🔧 Test Mode (Manual Address)</button>
+      <input type="text" id="manualAddress" placeholder="0xYourWalletAddress..." class="btn" style="background:#1f2937;">
     </div>
   </div>
 
@@ -123,9 +128,8 @@
     function updateMeme() {
       if (!currentImage) return;
       ctx.drawImage(currentImage, 0, 0, 500, 500);
-
-      const top = document.getElementById('topText').value;
-      const bottom = document.getElementById('bottomText').value;
+      const top = document.getElementById('topText').value || "AYAN";
+      const bottom = document.getElementById('bottomText').value || "BUILD ON APTOS";
       const size = parseInt(document.getElementById('textSize').value);
       const t = themes[currentTheme];
 
@@ -133,22 +137,23 @@
       ctx.textAlign = 'center';
       ctx.strokeStyle = t.stroke;
       ctx.fillStyle = t.fill;
-      ctx.lineWidth = size / 8;
+      ctx.lineWidth = Math.max(3, size / 10);
 
-      ctx.strokeText(top.toUpperCase(), 250, 90);
-      ctx.fillText(top.toUpperCase(), 250, 90);
-      ctx.strokeText(bottom.toUpperCase(), 250, 460);
-      ctx.fillText(bottom.toUpperCase(), 250, 460);
+      ctx.strokeText(top.toUpperCase(), 250, 100);
+      ctx.fillText(top.toUpperCase(), 250, 100);
+      ctx.strokeText(bottom.toUpperCase(), 250, 450);
+      ctx.fillText(bottom.toUpperCase(), 250, 450);
     }
 
     function changeTheme(n) { currentTheme = n; updateMeme(); }
 
+    // Upload
     document.getElementById('uploadArea').onclick = () => document.getElementById('imageUpload').click();
     document.getElementById('imageUpload').onchange = (e) => {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = (ev) => {
+        reader.onload = ev => {
           const img = new Image();
           img.onload = () => { currentImage = img; updateMeme(); };
           img.src = ev.target.result;
@@ -157,25 +162,23 @@
       }
     };
 
-    // Improved Connect Function
     async function connectWallet() {
+      const status = document.getElementById('walletStatus');
       try {
-        if (typeof window.aptos === 'undefined') {
-          alert("❌ Petra Wallet পাওয়া যায়নি!\n\nকরণীয়:\n1. Petra Wallet অ্যাপ খুলে রাখুন\n2. ব্রাউজার রিফ্রেশ করুন\n3. ডেস্কটপ কম্পিউটারে চেষ্টা করুন (সবচেয়ে ভালো কাজ করে)");
+        if (typeof window.aptos !== 'undefined') {
+          const response = await window.aptos.connect();
+          accountAddress = response.address;
+          status.innerHTML = `✅ Connected: \( {accountAddress.slice(0,6)}... \){accountAddress.slice(-4)}`;
+          document.getElementById('connectBtn').style.display = 'none';
+          document.getElementById('disconnectBtn').style.display = 'block';
+          alert("🎉 Petra Wallet Connected Successfully!");
           return;
+        } else {
+          alert("Petra Wallet ডিটেক্ট হয়নি।\n\n1. Petra অ্যাপ খুলে রাখুন\n2. ব্রাউজার রিফ্রেশ করুন\n3. অথবা Test Mode ব্যবহার করুন");
         }
-
-        const response = await window.aptos.connect();
-        accountAddress = response.address;
-
-        document.getElementById('walletStatus').innerHTML = `✅ \( {accountAddress.slice(0,6)}... \){accountAddress.slice(-4)}`;
-        document.getElementById('connectBtn').style.display = 'none';
-        document.getElementById('disconnectBtn').style.display = 'block';
-
-        alert("🎉 Petra Wallet সফলভাবে কানেক্ট হয়েছে!\n\nএখন Publish বাটন চাপলে Testnet-এ যাবে।");
-      } catch (error) {
-        console.error(error);
-        alert("Connect করতে সমস্যা হয়েছে।\n\nPetra Wallet অ্যাপ খুলে আবার চেষ্টা করুন।");
+      } catch (err) {
+        console.error(err);
+        alert("Connect Failed.\n\nPetra অ্যাপ খুলে আবার চেষ্টা করুন।\nঅথবা Test Mode চালু করুন।");
       }
     }
 
@@ -186,17 +189,33 @@
       document.getElementById('disconnectBtn').style.display = 'none';
     }
 
+    function toggleManual() {
+      const input = document.getElementById('manualAddress');
+      input.style.display = input.style.display === 'block' ? 'none' : 'block';
+      if (input.style.display === 'block') input.focus();
+    }
+
+    document.getElementById('manualAddress').addEventListener('change', (e) => {
+      if (e.target.value.trim()) {
+        accountAddress = e.target.value.trim();
+        document.getElementById('walletStatus').innerHTML = `✅ Test Mode: ${accountAddress.slice(0,6)}...`;
+        document.getElementById('connectBtn').style.display = 'none';
+        document.getElementById('disconnectBtn').style.display = 'block';
+        alert("✅ Test Mode Active! এখন Publish করতে পারবেন।");
+      }
+    });
+
     function publishToShelby() {
       if (!accountAddress) {
-        alert("প্রথমে Connect Petra Wallet বাটনে ক্লিক করুন!");
+        alert("প্রথমে Connect Petra Wallet বা Test Mode চালু করুন!");
         return;
       }
-      alert(`✅ Meme Published Successfully on Shelby Testnet!\n\nWallet: ${accountAddress}\n\n(এটা ডেমো — আসল ফি কাটতে হলে Aptos Testnet-এ ফান্ড থাকতে হবে)`);
+      alert(`✅ Meme Published on Shelby Testnet!\n\nWallet: ${accountAddress}\n\n(ডেমো মোড - আসল ট্রানজেকশন হলে ফি কাটবে)`);
     }
 
     function downloadMeme() {
       const link = document.createElement('a');
-      link.download = 'Ayan-Shelby-Meme.png';
+      link.download = `Ayan-Shelby-Meme-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     }
