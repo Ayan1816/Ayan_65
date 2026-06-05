@@ -49,13 +49,12 @@
       </div>
       <input type="file" id="imageUpload" accept="image/*" style="display:none;">
 
-      <button onclick="connectWallet()" id="connectBtn" class="btn connect">🔗 Connect Petra Wallet</button>
-      <button onclick="disconnectWallet()" id="disconnectBtn" class="btn" style="display:none;background:#ef4444;color:white;">🚫 Disconnect</button>
+      <button onclick="disconnectWallet()" id="disconnectBtn" class="btn" style="background:#ef4444;color:white;">🚫 Disconnect</button>
 
       <button onclick="publishToShelby()" class="btn publish">🚀 Publish to ShelbyNet (Testnet)</button>
       <button onclick="downloadMeme()" class="btn download">📥 Download PNG</button>
 
-      <button onclick="useTestMode()" class="btn" style="background:#64748b;margin-top:15px;">🔧 Use Test Mode (Manual Wallet)</button>
+      <button onclick="changeWallet()" class="btn" style="background:#64748b;margin-top:15px;">🔄 Change Wallet Address</button>
     </div>
   </div>
 
@@ -64,7 +63,9 @@
     const ctx = canvas.getContext('2d');
     let currentImage = null;
     let currentTheme = 0;
-    let accountAddress = null;
+    
+    // তোমার Wallet Address হার্ডকোড করা হয়েছে
+    let accountAddress = "0x4f5432e1207be7aa3528d6f88f759acab63330105e1ad598e9bcef40c9d93eb5";
 
     const themes = [
       { stroke: '#000', fill: '#fff' },
@@ -100,6 +101,58 @@
 
     function changeTheme(n) { currentTheme = n; updateMeme(); }
 
+    document.getElementById('uploadArea').onclick = () => document.getElementById('imageUpload').click();
+    document.getElementById('imageUpload').onchange = e => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const img = new Image();
+          img.onload = () => { currentImage = img; updateMeme(); };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    function disconnectWallet() {
+      accountAddress = null;
+      document.getElementById('walletStatus').textContent = "Not Connected";
+      alert("Wallet Disconnected");
+    }
+
+    function changeWallet() {
+      const newAddr = prompt("নতুন Wallet Address দাও:", accountAddress);
+      if (newAddr && newAddr.length > 20) {
+        accountAddress = newAddr;
+        document.getElementById('walletStatus').innerHTML = `✅ Test: ${newAddr.slice(0,8)}...`;
+        alert("Wallet Address Updated!");
+      }
+    }
+
+    function publishToShelby() {
+      if (!accountAddress) {
+        alert("Wallet Connected নেই!");
+        return;
+      }
+      alert(`✅ Meme Published on Shelby Testnet!\n\nWallet: ${accountAddress}\n\n(এটা Test Mode - আসল ট্রানজেকশন হলে ফি কাটবে)`);
+    }
+
+    function downloadMeme() {
+      const link = document.createElement('a');
+      link.download = 'ayan-shelby-meme.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+
+    // অ্যাপ লোড হওয়ার সাথে সাথে তোমার wallet সেট হয়ে যাবে
+    window.onload = () => {
+      document.getElementById('walletStatus').innerHTML = `✅ Test: ${accountAddress.slice(0,8)}...`;
+      loadDefault();
+    };
+  </script>
+</body>
+</html>
     document.getElementById('uploadArea').onclick = () => document.getElementById('imageUpload').click();
     document.getElementById('imageUpload').onchange = e => {
       const file = e.target.files[0];
