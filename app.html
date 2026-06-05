@@ -125,9 +125,10 @@ document.getElementById('imageUpload').onchange = (e) => {
     }
 };
 
-// ==================== ফিক্সড ও ক্লিন ওয়ালেট লজিক ====================
+// ==================== ফিক্সড ও মোবাইল ফ্রেন্ডলি ওয়ালেট লজিক ====================
 
 function getStandardPetraWallet() {
+    // মোবাইল ইন-অ্যাপ ব্রাউজার এবং মায়সেস এক্সটেনশন উভয়ের জন্য স্ট্যান্ডার্ড অবজেক্ট
     if (window.aptos) return window.aptos;
     if (window.petra) return window.petra;
     if (window.__aptosWallets && window.__aptosWallets.length > 0) {
@@ -152,17 +153,27 @@ async function handleWalletAction() {
         const wallet = getStandardPetraWallet();
         
         if (!wallet) {
-            alert("Petra Wallet পাওয়া যায়নি! অনুগ্রহ করে আপনার Mises ব্রাউজারে Petra Extension ইনস্টল রাখুন এবং পেজটি একবার রিফ্রেশ দিন।");
+            alert("Petra Wallet খুঁজে পাওয়া যায়নি! অ্যাপটি আনলক রেখে পেজটি রিলোড করুন।");
             return;
         }
 
         walletBtn.innerText = "Connecting...";
 
-        // সরাসরি মায়সেস ব্রাউজারের এক্সটেনশনকে ট্রিগার করার জন্য পিউর মেথড
-        const response = await wallet.connect();
-        
-        const account = response.account || response;
-        accountAddress = account.address || account;
+        // মোবাইল ডিভাইসের রিজেকশন ইস্যু ফিক্স করার জন্য ইউনিভার্সাল কানেক্ট মেথড
+        let accountData;
+        if (typeof wallet.connect === 'function') {
+            accountData = await wallet.connect();
+        } else if (wallet.features && wallet.features['aptos:connect']) {
+            accountData = await wallet.features['aptos:connect'].connect();
+        }
+
+        // ওয়ালেট এড্রেস ফিল্টারিং
+        if (accountData) {
+            accountAddress = accountData.address || accountData;
+            if (typeof accountAddress === 'object' && accountAddress.address) {
+                accountAddress = accountAddress.address;
+            }
+        }
 
         if (accountAddress) {
             const formattedAddr = `${accountAddress.slice(0, 6)}...${accountAddress.slice(-4)}`;
@@ -171,12 +182,15 @@ async function handleWalletAction() {
             
             document.getElementById('networkStatus').innerText = "Network: testnet";
             document.getElementById('networkStatus').style.color = "#22c55e";
+        } else {
+            throw new Error("Address not found");
         }
+
     } catch (err) {
         console.error("Wallet Connection Error:", err);
         walletBtn.innerText = "Connect Wallet";
         walletBtn.className = "theme-btn connect";
-        alert("কানেকশন রিজেক্ট হয়েছে বা ওয়ালেট লকড আছে। এক্সটেনশনটি ওপেন করে পাসওয়ার্ড দিয়ে আনলক রাখুন।");
+        alert("ওয়ালেট সেশন রেসপন্স করেনি। অনুগ্রহ করে আপনার ওয়ালেট অ্যাপটি ওপেন করে আনলক রাখুন এবং পুনরায় চেষ্টা করুন।");
     }
 }
 
@@ -190,7 +204,7 @@ async function publishToShelby() {
         const wallet = getStandardPetraWallet();
         if (!wallet) return;
 
-        alert("Uploading to Aptos Testnet... দয়া করে ওয়ালেট উইন্ডোতে Approve করুন।");
+        alert("দয়া করে ওয়ালেট স্ক্রিনে ট্রানজেকশনটি Approve করুন।");
         
         const transactionPayload = {
             function: "0x1::coin::transfer",
@@ -198,15 +212,20 @@ async function publishToShelby() {
             arguments: [accountAddress, "1000"]
         };
 
-        let txResult = await wallet.signAndSubmitTransaction(transactionPayload);
+        let txResult;
+        if (typeof wallet.signAndSubmitTransaction === 'function') {
+            txResult = await wallet.signAndSubmitTransaction(transactionPayload);
+        } else if (wallet.features && wallet.features['aptos:signAndSubmitTransaction']) {
+            txResult = await wallet.features['aptos:signAndSubmitTransaction'].signAndSubmitTransaction({ payload: transactionPayload });
+        }
 
         if (txResult) {
             const hash = txResult.hash || txResult;
-            alert(`Succeed! Transaction confirmed.\nHash: ${hash}`);
+            alert(`সফল হয়েছে!\nTx Hash: ${hash}`);
         }
     } catch (error) {
         console.error("Transaction Error:", error);
-        alert("Testnet transaction failed or was cancelled!");
+        alert("ট্রানজেকশনটি ক্যানসেল বা ফেইল হয়েছে।");
     }
 }
 
