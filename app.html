@@ -125,12 +125,28 @@ document.getElementById('imageUpload').onchange = (e) => {
     }
 };
 
-// ==================== অফিশিয়াল Aptos স্ট্যান্ডার্ড মোবাইল ফিক্স ====================
+// ==================== আলটিমেট মোবাইল ডিটেকশন ইঞ্জিন ====================
 
-function getPetraWallet() {
-    if (window.aptos) return window.aptos;
+async function getPetraWalletAsync() {
+    // যদি সরাসরি অবজেক্ট থাকে
     if (window.petra) return window.petra;
-    return null;
+    if (window.aptos) return window.aptos;
+
+    // মোবাইলে এক্সটেনশন ইনজেক্ট হতে কয়েক মিলিগ্রাম সময় লাগতে পারে, তাই ১ সেকেন্ড লুপ চেকিং
+    return new Promise((resolve) => {
+        let attempts = 0;
+        const interval = setInterval(() => {
+            attempts++;
+            if (window.petra || window.aptos) {
+                clearInterval(interval);
+                resolve(window.petra || window.aptos);
+            }
+            if (attempts > 10) {
+                clearInterval(interval);
+                resolve(null);
+            }
+        }, 100);
+    });
 }
 
 async function handleWalletAction() {
@@ -146,28 +162,28 @@ async function handleWalletAction() {
     }
 
     try {
-        const wallet = getPetraWallet();
+        walletBtn.innerText = "Searching...";
+        const wallet = await getPetraWalletAsync();
         
         if (!wallet) {
-            alert("Petra Wallet পাওয়া যায়নি! ওয়ালেটটি আনলক করে পেজটি একবার রিলোড করুন।");
+            alert("Petra Wallet ডিটেক্ট করা যায়নি! এক্সটেনশনটি ওপেন বা আনলক করে পেজটি আবার রিফ্রেশ করুন।");
+            walletBtn.innerText = "Connect Wallet";
             return;
         }
 
         walletBtn.innerText = "Connecting...";
 
-        // অফিশিয়াল অবজেক্ট স্ট্রাকচার অনুযায়ী মোবাইল পারমিশন পপ-আপ রিকোয়েস্ট
-        const account = await wallet.connect();
+        // মোবাইলের জন্য ফুল-প্রুফ সেফ কানেক্ট রিকোয়েস্ট
+        const response = await wallet.connect();
         
-        //Petra ওয়ালেটের স্ট্যান্ডার্ড অবজেক্ট থেকে পিউর অ্যাড্রেস ফিল্টারিং (যা আগে ভুল হচ্ছিল)
-        if (account && account.address) {
-            accountAddress = account.address;
-        } else if (typeof account === 'string') {
-            accountAddress = account;
-        } else if (account && account.account && account.account.address) {
-            accountAddress = account.account.address;
-        }
+        // অবজেক্টের বিভিন্ন লেয়ার থেকে সেফলি অ্যাড্রেস এক্সট্র্যাক্ট করা
+        let rawAddress = null;
+        if (response && response.address) rawAddress = response.address;
+        else if (response && response.account && response.account.address) rawAddress = response.account.address;
+        else if (typeof response === 'string') rawAddress = response;
 
-        if (accountAddress) {
+        if (rawAddress) {
+            accountAddress = rawAddress;
             const formattedAddr = `${accountAddress.slice(0, 6)}...${accountAddress.slice(-4)}`;
             walletBtn.innerText = formattedAddr;
             walletBtn.className = "theme-btn disconnect";
@@ -175,14 +191,14 @@ async function handleWalletAction() {
             document.getElementById('networkStatus').innerText = "Network: testnet";
             document.getElementById('networkStatus').style.color = "#22c55e";
         } else {
-            throw new Error("Failed to extract address object.");
+            throw new Error("Address format invalid.");
         }
 
     } catch (err) {
         console.error("Wallet Connection Error:", err);
         walletBtn.innerText = "Connect Wallet";
         walletBtn.className = "theme-btn connect";
-        alert("ওয়ালেট কানেকশন রেসপন্স সাকসেসফুল হয়নি। পেত্রা ওয়ালেটটি ব্যাকগ্রাউন্ডে ওপেন রেখে অনুগ্রহ করে আবার ট্রাই করুন।");
+        alert("কানেকশন রেসপন্স ফেইল হয়েছে। নিশ্চিত করুন আপনার Petra ওয়ালেট এক্সটেনশনটি পাসওয়ার্ড দিয়ে আনলকড অবস্থায় ব্যাকগ্রাউন্ডে সচল আছে।");
     }
 }
 
@@ -193,26 +209,26 @@ async function publishToShelby() {
     }
     
     try {
-        const wallet = getPetraWallet();
+        const wallet = await getPetraWalletAsync();
         if (!wallet) return;
 
-        alert("দয়া করে ওয়ালেট স্ক্রিনে ট্রানজেকশনটি Approve করুন।");
+        alert("ট্রানজেকশন রিকোয়েস্ট পাঠানো হয়েছে! অনুগ্রহ করে Petra ওয়ালেটে Approve করুন।");
         
         const transactionPayload = {
-            arguments: [accountAddress, "1000"],
             function: "0x1::coin::transfer",
-            type_arguments: ["0x1::aptos_coin::AptosCoin"]
+            type_arguments: ["0x1::aptos_coin::AptosCoin"],
+            arguments: [accountAddress, "1000"]
         };
 
-        const pendingTransaction = await wallet.signAndSubmitTransaction(transactionPayload);
+        const txResult = await wallet.signAndSubmitTransaction(transactionPayload);
 
-        if (pendingTransaction) {
-            const hash = pendingTransaction.hash || pendingTransaction;
+        if (txResult) {
+            const hash = txResult.hash || txResult;
             alert(`সফল হয়েছে!\nTx Hash: ${hash}`);
         }
     } catch (error) {
         console.error("Transaction Error:", error);
-        alert("ট্রানজেকশনটি ক্যানсел বা ফেইল হয়েছে।");
+        alert("ট্রানজেকশনটি ক্যানসেল বা ফেইল হয়েছে।");
     }
 }
 
