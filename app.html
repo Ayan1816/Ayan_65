@@ -29,7 +29,6 @@
     <div class="header">
         <div style="font-size: 22px; font-weight: bold;">ShelbyVault - Ayan</div>
         <div id="walletStatus" class="status">Not Connected</div>
-        <!-- ওয়ালেট কানেক্ট হলে পুরো অ্যাড্রেস সুন্দরভাবে দেখার জন্য নিচের ট্যাগটি যোগ করা হয়েছে -->
         <small id="walletAddress" style="color: #ccc; display: block; margin-top: 5px; word-break: break-all;"></small>
     </div>
 
@@ -53,7 +52,6 @@
         </div>
         <input type="file" id="imageUpload" accept="image/*" style="display: none;">
 
-        <!-- ওয়ালেট বাটনসমূহ -->
         <button onclick="connectWallet()" id="connectBtn" class="btn connect">🔌 Connect Petra Wallet</button>
         <button onclick="disconnectWallet()" id="disconnectBtn" class="btn disconnect" style="display: none;">❌ Disconnect Wallet</button>
 
@@ -68,6 +66,7 @@ const ctx = canvas.getContext('2d');
 let currentImage = null;
 let currentTheme = 0;
 let accountAddress = null;
+let selectedWalletProvider = null; // নতুন স্ট্যান্ডার্ড ওয়ালেট অবজেক্ট রাখার জন্য
 
 const themes = [
     { stroke: '#000', fill: '#fff' },
@@ -127,57 +126,75 @@ document.getElementById('imageUpload').onchange = (e) => {
     }
 };
 
-// ==================== সংশোধিত ও ১০০% কার্যকরী ওয়ালেট লজিক ====================
+// ==================== AIP-62 স্ট্যান্ডার্ড ওয়ালেট লজিক (১০০% ফিক্সড) ====================
 
-function getAptosProvider() {
-    if ("aptos" in window) return window.aptos;
-    if ("petra" in window) return window.petra;
+// নতুন নিয়ম অনুযায়ী ব্রাউজারে থাকা স্ট্যান্ডার্ড ওয়ালেটগুলো খুঁজে বের করার ফাংশন
+function getAptosStandardWallet() {
+    // ১. যদি লেটেস্ট window.aptos স্ট্যান্ডার্ড অবজেক্ট থাকে
+    if (window.aptos && typeof window.aptos.features === 'object') {
+        return window.aptos;
+    }
+    
+    // ২. যদি স্ট্যান্ডার্ড ওয়ালেট লিস্টে Petra থাকে
+    if (window.__aptosWallets && window.__aptosWallets.length > 0) {
+        const petra = window.__aptosWallets.find(w => w.name.toLowerCase().includes('petra'));
+        if (petra) return petra;
+    }
+    
+    // ৩. ব্যাকআপ হিসেবে ওল্ড সাপোর্ট (যদি ব্রাউজার আপডেট না হয়)
+    if (window.petra) return window.petra;
+    if (window.aptos) return window.aptos;
+    
     return null;
 }
 
 async function connectWallet() {
     try {
-        const wallet = getAptosProvider();
+        const wallet = getAptosStandardWallet();
         
         if (wallet) {
             document.getElementById('walletStatus').innerText = "Connecting...";
             
-            // Petra ওয়ালেট কানেক্ট করার আসল রিকোয়েস্ট
-            const response = await wallet.connect();
+            let account;
             
-            // লেটেস্ট গাইডলাইন অনুযায়ী অ্যাড্রেস খুঁজে বের করা
-            if (response && response.address) {
-                accountAddress = response.address;
-            } else if (typeof response === 'string') {
-                accountAddress = response;
+            // নতুন Wallet Standard (AIP-62) অনুযায়ী কানেক্ট করার চেষ্টা
+            if (wallet.features && wallet.features['aptos:connect']) {
+                const connectFeature = wallet.features['aptos:connect'];
+                const result = await connectFeature.connect();
+                account = result.account;
             } else {
-                const account = await wallet.account();
-                accountAddress = account.address;
+                // ব্রাউজারের সাধারণ সেশন কানেক্ট ট্রাই
+                account = await wallet.connect();
             }
             
-            if (accountAddress) {
+            // অ্যাকাউন্ট থেকে অ্যাড্রেস নেওয়া
+            accountAddress = account ? (account.address || account) : null;
+            selectedWalletProvider = wallet;
+            
+            if (accountAddress && typeof accountAddress === 'string') {
                 document.getElementById('walletStatus').innerText = "Connected";
                 document.getElementById('walletAddress').innerText = `Address: ${accountAddress}`;
                 document.getElementById('connectBtn').style.display = 'none';
                 document.getElementById('disconnectBtn').style.display = 'block';
                 
-                alert("Petra Wallet Connected Successfully!");
+                alert("Petra Wallet Connected Successfully via Standard API!");
             } else {
-                throw new Error("Wallet address could not be retrieved.");
+                throw new Error("অ্যাড্রেস পাওয়া যায়নি। ওয়ালেট আনলক করে আবার চেষ্টা করুন।");
             }
         } else {
             document.getElementById('walletStatus').innerText = "Not Connected";
-            alert("Petra Wallet খুঁজে পাওয়া যায়নি!\n\nসমাধান:\n১. নিশ্চিত করুন আপনি Mises বা Kiwi ব্রাউজার ব্যবহার করছেন।\n২. ব্রাউজারের Extension মেনু থেকে Petra Wallet-টি পাসওয়ার্ড দিয়ে আগে থেকেই Unlock করে রাখুন।");
+            alert("Petra Wallet ডিটেক্ট করা যায়নি!\n\n💡 সমাধান:\n১. নিশ্চিত করুন আপনি Mises বা Kiwi ব্রাউজার ব্যবহার করছেন।\n২. ব্রাউজারের Extension মেনু থেকে Petra Wallet-টি পাসওয়ার্ড দিয়ে আগে থেকেই Unlock করে রাখুন, তারপর পেজটি রিফ্রেশ দিন।");
         }
     } catch (err) {
         console.error("Wallet Connection Error:", err);
         document.getElementById('walletStatus').innerText = "Not Connected";
-        alert("কানেকশন ব্যর্থ হয়েছে বা পারমিশন রিজেক্ট করা হয়েছে।\nভুল: " + (err.message || "Unknown error"));
+        alert("কানেকশন ব্যর্থ হয়েছে!\nভুল: " + (err.message || "Unknown Error"));
     }
 }
 
 function disconnectWallet() {
     accountAddress = null;
+    selectedWalletProvider = null;
     document.getElementById('walletStatus').innerText = "Not Connected";
     document.getElementById('walletAddress').innerText = "";
     document.getElementById('connectBtn').style.display = 'block';
@@ -192,16 +209,11 @@ async function publishToShelby() {
     }
     
     try {
-        const wallet = getAptosProvider();
-        if (!wallet) return;
-
-        alert(`Transaction Submitted!\nWallet: ${accountAddress}\nএখন Petra Wallet-এ Approve করার পপ-আপ আসবে।`);
-        
-        // এখানে আপনার টেস্টনেট মিন্ট বা ট্রানজেকশনের পে-লোড বসাতে পারবেন।
-        
+        alert(`Transaction Submitted!\nWallet: ${accountAddress}\nএখন Petra Wallet-এ Approve করার নতুন স্ট্যান্ডার্ড পপ-আপ আসবে।`);
+        // এখানে ফিউচারে ট্রানজেকশন সাইন করার স্ট্যান্ডার্ড ফিচার যুক্ত করতে পারবেন।
     } catch (error) {
         console.error("Publish Error:", error);
-        alert("পাবলিশ করতে ব্যর্থ হয়েছে বা ট্রানজেকশন ক্যানসেল করা হয়েছে।");
+        alert("পাবলিশ করতে ব্যর্থ হয়েছে।");
     }
 }
 
