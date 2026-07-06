@@ -1,246 +1,112 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShelbyVault - Ayan Edition</title>
+    <title>Ayan1816 | Terminal</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background-color: #0d0e12; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .card { max-width: 500px; width: 100%; background: #161820; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-        .header { padding: 15px 20px; background: linear-gradient(90deg, #1e3a8a, #0d9488); border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        canvas { width: 100%; display: block; background: #000; border-radius: 8px; margin-bottom: 20px; }
-        .controls { display: flex; flex-direction: column; gap: 12px; }
-        input[type="text"], input[type="range"] { width: 100%; padding: 12px; background: #1f2937; border: 1px solid #374151; border-radius: 6px; color: white; font-size: 16px; }
-        .theme-buttons { display: flex; gap: 8px; margin: 5px 0; }
-        .theme-btn { flex: 1; padding: 14px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .theme-btn:hover { opacity: 0.9; }
-        .btn { width: 100%; padding: 16px; margin-top: 8px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
-        .connect { background: #3b82f6; color: white; }
-        .connect:hover { background: #2563eb; }
-        .disconnect { background: #dc2626; color: white; }
-        .publish { background: #2563eb; color: white; }
-        .download { background: #4b5563; color: white; }
-        .status-container { display: flex; flex-direction: column; align-items: flex-end; font-size: 14px; }
-        .network-tag { background: #1e293b; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-top: 4px; color: #38bdf8; font-weight: bold; }
+        body {
+            background-color: #0d1117;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            margin: 0;
+            font-size: 16px;
+            overflow-x: hidden;
+        }
+        #terminal {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .output {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+        }
+        .prompt {
+            color: #00ffff;
+            margin-right: 10px;
+        }
+        input {
+            background-color: transparent;
+            border: none;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            outline: none;
+            flex-grow: 1;
+            caret-color: #00ff00;
+        }
+        a {
+            color: #ff00ff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .highlight { color: #f85d7f; }
     </style>
 </head>
 <body>
-
-<div class="card">
-    <div class="header">
-        <div>
-            <div style="font-size: 20px; font-weight: bold;">SHELBY</div>
-            <div style="font-size: 12px; color: #9ca3af;">Meme Studio</div>
+    <div id="terminal">
+        <div class="output">
+            Welcome to Ayan's Terminal Portfolio.<br>
+            Type <span class="highlight">'help'</span> to see a list of available commands.
         </div>
-        <div class="status-container">
-            <button onclick="handleWalletAction()" id="walletBtn" class="theme-btn connect" style="padding: 8px 16px; flex: none; font-size: 14px;">Connect Wallet</button>
-            <span id="networkStatus" class="network-tag">Network: Offline</span>
+        <div id="history"></div>
+        <div class="command-line">
+            <span class="prompt">visitor@ayan1816:~$</span>
+            <input type="text" id="cmd" autocomplete="off" autofocus>
         </div>
     </div>
 
-    <canvas id="memeCanvas" width="500" height="500"></canvas>
+    <script>
+        const input = document.getElementById('cmd');
+        const history = document.getElementById('history');
 
-    <div class="controls">
-        <input type="text" id="topText" value="SHELBY IS HOT" oninput="updateMeme()">
-        <input type="text" id="bottomText" value="AWS IS COLD" oninput="updateMeme()">
-
-        <div class="theme-buttons">
-            <button class="theme-btn" style="background: #3b82f6;" onclick="changeTheme(0)">Blue</button>
-            <button class="theme-btn" style="background: #ef4444;" onclick="changeTheme(1)">Sunset</button>
-            <button class="theme-btn" style="background: #22c55e;" onclick="changeTheme(2)">Green</button>
-        </div>
-
-        <div id="uploadArea" style="border: 2px dashed #4b5563; border-radius: 8px; padding: 15px; text-align: center; margin: 5px 0; cursor: pointer; background: #1f2937;">
-            <p style="color: #9ca3af; margin: 0;">Upload Bg</p>
-        </div>
-        <input type="file" id="imageUpload" accept="image/*" style="display: none;">
-
-        <button onclick="downloadMeme()" class="btn download">Download PNG</button>
-        <button onclick="publishToShelby()" class="btn publish">Publish to Shelby (Testnet Tx)</button>
-    </div>
-</div>
-
-<script>
-const canvas = document.getElementById('memeCanvas');
-const ctx = canvas.getContext('2d');
-let currentImage = null;
-let currentTheme = 0;
-let accountAddress = null;
-
-const themes = [
-    { stroke: '#000', fill: '#fff' },
-    { stroke: '#fff', fill: '#f97316' },
-    { stroke: '#fff', fill: '#22c55e' }
-];
-
-function loadDefault() {
-    const img = new Image();
-    img.src = 'https://picsum.photos/id/1015/500/500';
-    img.onload = () => {
-        currentImage = img;
-        updateMeme();
-    };
-}
-
-function updateMeme() {
-    if (!currentImage) return;
-    ctx.drawImage(currentImage, 0, 0, 500, 500);
-
-    const top = document.getElementById('topText').value || 'SHELBY IS HOT';
-    const bottom = document.getElementById('bottomText').value || 'AWS IS COLD';
-    const t = themes[currentTheme];
-
-    ctx.font = `bold 45px Arial`;
-    ctx.textAlign = 'center';
-    ctx.strokeStyle = t.stroke;
-    ctx.fillStyle = t.fill;
-    ctx.lineWidth = 6;
-
-    ctx.strokeText(top.toUpperCase(), 250, 80);
-    ctx.fillText(top.toUpperCase(), 250, 80);
-    ctx.strokeText(bottom.toUpperCase(), 250, 440);
-    ctx.fillText(bottom.toUpperCase(), 250, 440);
-}
-
-function changeTheme(i) {
-    currentTheme = i;
-    updateMeme();
-}
-
-document.getElementById('uploadArea').onclick = () => document.getElementById('imageUpload').click();
-document.getElementById('imageUpload').onchange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            const img = new Image();
-            img.onload = () => {
-                currentImage = img;
-                updateMeme();
-            };
-            img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-};
-
-// ==================== আলটিমেট মোবাইল ডিটেকশন ইঞ্জিন ====================
-
-async function getPetraWalletAsync() {
-    // যদি সরাসরি অবজেক্ট থাকে
-    if (window.petra) return window.petra;
-    if (window.aptos) return window.aptos;
-
-    // মোবাইলে এক্সটেনশন ইনজেক্ট হতে কয়েক মিলিগ্রাম সময় লাগতে পারে, তাই ১ সেকেন্ড লুপ চেকিং
-    return new Promise((resolve) => {
-        let attempts = 0;
-        const interval = setInterval(() => {
-            attempts++;
-            if (window.petra || window.aptos) {
-                clearInterval(interval);
-                resolve(window.petra || window.aptos);
-            }
-            if (attempts > 10) {
-                clearInterval(interval);
-                resolve(null);
-            }
-        }, 100);
-    });
-}
-
-async function handleWalletAction() {
-    const walletBtn = document.getElementById('walletBtn');
-    
-    if (accountAddress) {
-        accountAddress = null;
-        walletBtn.innerText = "Connect Wallet";
-        walletBtn.className = "theme-btn connect";
-        document.getElementById('networkStatus').innerText = "Network: Offline";
-        document.getElementById('networkStatus').style.color = "#38bdf8";
-        return;
-    }
-
-    try {
-        walletBtn.innerText = "Searching...";
-        const wallet = await getPetraWalletAsync();
-        
-        if (!wallet) {
-            alert("Petra Wallet ডিটেক্ট করা যায়নি! এক্সটেনশনটি ওপেন বা আনলক করে পেজটি আবার রিফ্রেশ করুন।");
-            walletBtn.innerText = "Connect Wallet";
-            return;
-        }
-
-        walletBtn.innerText = "Connecting...";
-
-        // মোবাইলের জন্য ফুল-প্রুফ সেফ কানেক্ট রিকোয়েস্ট
-        const response = await wallet.connect();
-        
-        // অবজেক্টের বিভিন্ন লেয়ার থেকে সেফলি অ্যাড্রেস এক্সট্র্যাক্ট করা
-        let rawAddress = null;
-        if (response && response.address) rawAddress = response.address;
-        else if (response && response.account && response.account.address) rawAddress = response.account.address;
-        else if (typeof response === 'string') rawAddress = response;
-
-        if (rawAddress) {
-            accountAddress = rawAddress;
-            const formattedAddr = `${accountAddress.slice(0, 6)}...${accountAddress.slice(-4)}`;
-            walletBtn.innerText = formattedAddr;
-            walletBtn.className = "theme-btn disconnect";
+        const commands = {
+            help: "Available commands:<br>  <span class='highlight'>about</span>    - Who is Ayan?<br>  <span class='highlight'>projects</span> - View my Web3 & AI builds<br>  <span class='highlight'>skills</span>   - My tech stack<br>  <span class='highlight'>socials</span>  - Connect with me<br>  <span class='highlight'>clear</span>    - Clear the terminal screen",
             
-            document.getElementById('networkStatus').innerText = "Network: testnet";
-            document.getElementById('networkStatus').style.color = "#22c55e";
-        } else {
-            throw new Error("Address format invalid.");
-        }
-
-    } catch (err) {
-        console.error("Wallet Connection Error:", err);
-        walletBtn.innerText = "Connect Wallet";
-        walletBtn.className = "theme-btn connect";
-        alert("কানেকশন রেসপন্স ফেইল হয়েছে। নিশ্চিত করুন আপনার Petra ওয়ালেট এক্সটেনশনটি পাসওয়ার্ড দিয়ে আনলকড অবস্থায় ব্যাকগ্রাউন্ডে সচল আছে।");
-    }
-}
-
-async function publishToShelby() {
-    if (!accountAddress) {
-        alert("Please connect your Petra Wallet first!");
-        return;
-    }
-    
-    try {
-        const wallet = await getPetraWalletAsync();
-        if (!wallet) return;
-
-        alert("ট্রানজেকশন রিকোয়েস্ট পাঠানো হয়েছে! অনুগ্রহ করে Petra ওয়ালেটে Approve করুন।");
-        
-        const transactionPayload = {
-            function: "0x1::coin::transfer",
-            type_arguments: ["0x1::aptos_coin::AptosCoin"],
-            arguments: [accountAddress, "1000"]
+            about: "Hi, I'm Ayan! 👋<br>I am a Full-Stack Web3 & AI Infrastructure Architect.<br>I specialize in developing client-side decentralized applications (dApps) that bridge the gap between AI data security and blockchain immutability.",
+            
+            projects: "<br><b>1. 🛡️ Shelby Vault v2.0</b><br>Decentralized AI Data Hub built on Aptos. Features zero-knowledge AES-256 encryption and Real-Time JSON Prompt Validator.<br><br><b>2. 💳 PulsePay Arc</b><br>Next-Gen Crypto Payment Gateway designed for frictionless, low-latency Web3 micro-transactions.<br><br><i>Type 'socials' to find my GitHub and see the code!</i>",
+            
+            skills: "<b>Blockchain:</b> Aptos (Move), Ethereum, Solidity, Web3.js<br><b>Frontend:</b> React.js, Next.js, Tailwind CSS<br><b>Infrastructure:</b> IPFS, Pinata, Shelby S3 Pipeline",
+            
+            socials: "<b>Twitter:</b> <a href='https://x.com/ayan_ar65' target='_blank'>@ayan_ar65</a><br><b>LinkedIn:</b> <a href='https://www.linkedin.com/in/md-mohin-b6a4912b9' target='_blank'>Ayan (Md Mohin)</a><br><b>Discord:</b> Ayan1816",
         };
 
-        const txResult = await wallet.signAndSubmitTransaction(transactionPayload);
+        input.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                let cmdValue = input.value.trim().toLowerCase();
+                let response = "";
 
-        if (txResult) {
-            const hash = txResult.hash || txResult;
-            alert(`সফল হয়েছে!\nTx Hash: ${hash}`);
-        }
-    } catch (error) {
-        console.error("Transaction Error:", error);
-        alert("ট্রানজেকশনটি ক্যানসেল বা ফেইল হয়েছে।");
-    }
-}
+                if (cmdValue === "clear") {
+                    history.innerHTML = "";
+                    input.value = "";
+                    return;
+                }
 
-function downloadMeme() {
-    const link = document.createElement('a');
-    link.download = 'ayan-shelby-meme.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-}
+                if (commands[cmdValue]) {
+                    response = commands[cmdValue];
+                } else if (cmdValue !== "") {
+                    response = `Command not found: ${cmdValue}. Type 'help' for available commands.`;
+                }
 
-loadDefault();
-</script>
+                history.innerHTML += `<div class="command-line"><span class="prompt">visitor@ayan1816:~$</span> ${input.value}</div>`;
+                if (response !== "") {
+                    history.innerHTML += `<div class="output">${response}</div><br>`;
+                }
+                
+                input.value = "";
+                window.scrollTo(0, document.body.scrollHeight);
+            }
+        });
 
+        document.addEventListener('click', () => input.focus());
+    </script>
 </body>
 </html>
